@@ -1,16 +1,16 @@
 @import "tailwindcss";
 
-:root {
-  --background: #f6f3ed;
-  --foreground: #111111;
-  --muted: #6b6b6b;
-  --card: rgba(255, 255, 255, 0.88);
-  --border: #e7ddd0;
-  --panel: #fcfaf6;
-  --soft: #f4eee4;
-  --accent: #c8a96b;
-  --accent-soft: #efe3cb;
-  --dark: #111111;
+@theme {
+  --color-background: #f6f3ed;
+  --color-foreground: #111111;
+  --color-muted: #6b6b6b;
+  --color-card: rgba(255, 255, 255, 0.88);
+  --color-border: #e7ddd0;
+  --color-panel: #fcfaf6;
+  --color-soft: #f4eee4;
+  --color-accent: #c8a96b;
+  --color-accent-soft: #efe3cb;
+  --color-dark: #111111;
 }
 
 * {
@@ -29,7 +29,7 @@ body {
     radial-gradient(circle at top right, rgba(229, 236, 231, 0.42), transparent 28%),
     radial-gradient(circle at bottom left, rgba(240, 230, 213, 0.42), transparent 25%),
     linear-gradient(180deg, #f8f5ef 0%, #f5f1ea 100%);
-  color: var(--foreground);
+  color: var(--color-foreground);
   font-family: Arial, Helvetica, sans-serif;
   min-height: 100vh;
   text-rendering: optimizeLegibility;

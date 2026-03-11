@@ -1,70 +1,26 @@
 @import "tailwindcss";
 
-@theme {
-  --color-background: #f6f3ed;
-  --color-foreground: #111111;
-  --color-muted: #6b6b6b;
-  --color-card: rgba(255, 255, 255, 0.88);
-  --color-border: #e7ddd0;
-  --color-panel: #fcfaf6;
-  --color-soft: #f4eee4;
-  --color-accent: #c8a96b;
-  --color-accent-soft: #efe3cb;
-  --color-dark: #111111;
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
 }
 
-html {
-  scroll-behavior: smooth;
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
 }
 
 body {
-  background:
-    radial-gradient(circle at top left, rgba(217, 199, 165, 0.22), transparent 24%),
-    radial-gradient(circle at top right, rgba(229, 236, 231, 0.42), transparent 28%),
-    radial-gradient(circle at bottom left, rgba(240, 230, 213, 0.42), transparent 25%),
-    linear-gradient(180deg, #f8f5ef 0%, #f5f1ea 100%);
-  color: var(--color-foreground);
+  background: var(--background);
+  color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
-  min-height: 100vh;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
-button,
-input,
-select,
-textarea {
-  font: inherit;
-}
-
-button {
-  cursor: pointer;
-}
-
-input:-webkit-autofill,
-input:-webkit-autofill:hover,
-input:-webkit-autofill:focus,
-textarea:-webkit-autofill,
-textarea:-webkit-autofill:hover,
-textarea:-webkit-autofill:focus {
-  -webkit-box-shadow: 0 0 0 1000px #fcfbf8 inset !important;
-  -webkit-text-fill-color: #111111 !important;
-  transition: background-color 5000s ease-in-out 0s;
-}
-
-::selection {
-  background: #111111;
-  color: white;
 }

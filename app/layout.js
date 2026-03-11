@@ -1,5 +1,6 @@
 import "./globals.css";
 import AppGuard from "@/components/guards/AppGuard";
+import TawkToChatProvider from "@/components/support/TawkToChatProvider";
 
 export const metadata = {
   title: {
@@ -14,6 +15,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body className="min-h-screen bg-[#f7f6f2] text-[#111111] antialiased">
         <AppGuard>{children}</AppGuard>
+        <TawkToChatProvider />
       </body>
     </html>
   );

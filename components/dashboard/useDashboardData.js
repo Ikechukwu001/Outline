@@ -151,6 +151,53 @@ export default function useDashboardData() {
     };
   }, []);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!window.Tawk_API) return;
+
+    const applyVisitorData = () => {
+      try {
+        if (window.Tawk_API.setAttributes) {
+          window.Tawk_API.setAttributes(
+            {
+              name: userName || "Customer",
+              email: userEmail || "",
+              accountNumber: userRecord?.accountNumber || "",
+              status: userRecord?.status || "active",
+            },
+            function (error) {
+              if (error) {
+                console.error("Tawk.to setAttributes error:", error);
+              }
+            }
+          );
+        }
+      } catch (error) {
+        console.error("Failed to send visitor data to Tawk.to:", error);
+      }
+    };
+
+    if (window.Tawk_API.onLoad) {
+      const previousOnLoad = window.Tawk_API.onLoad;
+
+      window.Tawk_API.onLoad = function () {
+        if (typeof previousOnLoad === "function") {
+          previousOnLoad();
+        }
+        applyVisitorData();
+      };
+    } else {
+      const waitForTawk = setInterval(() => {
+        if (window.Tawk_API && typeof window.Tawk_API.setAttributes === "function") {
+          applyVisitorData();
+          clearInterval(waitForTawk);
+        }
+      }, 500);
+
+      return () => clearInterval(waitForTawk);
+    }
+  }, [userName, userEmail, userRecord]);
+
   return {
     userName,
     userEmail,

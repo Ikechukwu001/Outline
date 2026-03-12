@@ -1,3 +1,4 @@
+import Link from "next/link";
 import AuthInput from "@/components/ui/AuthInput";
 
 export default function LoginForm({
@@ -36,9 +37,12 @@ export default function LoginForm({
           Remember me
         </label>
 
-        <button type="button" className="text-sm font-medium text-[#111111]">
+        <Link
+          href="/forgot-password"
+          className="text-sm font-medium text-[#111111]"
+        >
           Forgot password?
-        </button>
+        </Link>
       </div>
 
       <button

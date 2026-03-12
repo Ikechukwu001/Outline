@@ -9,11 +9,8 @@ export default function AdminPage() {
             Admin Panel
           </p>
           <h1 className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-[#111111]">
-            Admin page works
+            Admin page works. Click on the Users tab to manage user accounts and view analytics.
           </h1>
-          <p className="mt-3 text-sm leading-7 text-[#666666]">
-            Your admin routing is now working correctly.
-          </p>
         </section>
       </main>
     </AdminShell>

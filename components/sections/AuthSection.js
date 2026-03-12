@@ -86,6 +86,7 @@ export default function AuthSection({ activeTab, setActiveTab }) {
       });
 
       setMessage("Account created successfully.");
+
       setSignupData({
         fullName: "",
         email: "",

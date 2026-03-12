@@ -20,16 +20,6 @@ const navItems = [
     href: "/admin/users",
     icon: Users,
   },
-  {
-    label: "Alerts",
-    href: "/admin/notifications",
-    icon: Bell,
-  },
-  {
-    label: "Access",
-    href: "/admin/access",
-    icon: ShieldCheck,
-  },
 ];
 
 export default function AdminMobileNav() {

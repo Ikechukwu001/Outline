@@ -8,11 +8,18 @@ import {
   BadgeCheck,
   Hash,
   Sparkles,
+  Bell,
+  ReceiptText,
+  Landmark,
 } from "lucide-react";
 import useDashboardData from "@/components/dashboard/useDashboardData";
 
+function formatMoney(value) {
+  return `$${Number(value || 0).toLocaleString()}`;
+}
+
 export default function ProfilePage() {
-  const { userName, userEmail, userRecord, notifications, loadingData } =
+  const { userName, userEmail, userRecord, notifications, transactions, loadingData } =
     useDashboardData();
 
   if (loadingData) {
@@ -31,6 +38,11 @@ export default function ProfilePage() {
   const balance = Number(userRecord?.balance || 0);
   const accountNumber = userRecord?.accountNumber || "Not assigned";
   const status = userRecord?.status || "active";
+  const transactionCount = transactions.length;
+  const notificationCount = notifications.length;
+
+  const latestTransaction = transactions[0] || null;
+  const latestNotification = notifications[0] || null;
 
   const profileCards = [
     {
@@ -57,37 +69,40 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-[2rem] border border-[#ece4d8] bg-white/92 p-6 shadow-[0_24px_60px_rgba(17,17,17,0.05)] sm:p-7">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+      <section className="relative overflow-hidden rounded-[2rem] border border-[#e9dfd1] bg-white/92 p-6 shadow-[0_24px_60px_rgba(17,17,17,0.05)] sm:p-7">
+        <div className="absolute right-[-30px] top-[-20px] h-32 w-32 rounded-full bg-[#eadfc8]/55 blur-3xl" />
+        <div className="absolute bottom-[-30px] left-[-20px] h-28 w-28 rounded-full bg-[#efe8dd]/70 blur-3xl" />
+
+        <div className="relative flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-[11px] uppercase tracking-[0.22em] text-[#948d83]">
               Profile
             </p>
-            <h1 className="mt-3 text-2xl font-semibold tracking-[-0.03em] text-[#111111] sm:text-[2rem]">
-              Your account identity
+            <h1 className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-[#111111] sm:text-[2rem]">
+              Your banking identity
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-7 text-[#666666]">
-              Review your premium banking profile, account details, and identity
-              information in one polished personal space.
+              Review your personal account identity, banking record details, and
+              customer account summary in one polished profile space.
             </p>
           </div>
 
           <div className="inline-flex items-center gap-2 self-start rounded-full border border-[#e9e1d5] bg-[#faf8f4] px-4 py-2.5 text-xs font-medium uppercase tracking-[0.18em] text-[#6e695f]">
             <ShieldCheck size={15} />
-            Verified account identity
+            Verified profile state
           </div>
         </div>
       </section>
 
       <section className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
         <div className="space-y-5">
-          <div className="rounded-[2rem] border border-[#ece4d8] bg-white p-6 shadow-[0_18px_40px_rgba(17,17,17,0.05)]">
+          <div className="rounded-[2rem] border border-[#e9dfd1] bg-white p-6 shadow-[0_18px_40px_rgba(17,17,17,0.05)]">
             <div className="flex flex-col items-center text-center">
               <div className="flex h-24 w-24 items-center justify-center rounded-[2rem] bg-[#111111] text-2xl font-semibold uppercase text-white shadow-[0_16px_30px_rgba(17,17,17,0.18)]">
                 {initials}
               </div>
 
-              <h2 className="mt-5 text-2xl font-semibold tracking-[-0.02em] text-[#111111]">
+              <h2 className="mt-5 text-2xl font-semibold tracking-[-0.03em] text-[#111111]">
                 {userName || "Customer"}
               </h2>
               <p className="mt-2 text-sm text-[#666666]">{userEmail}</p>
@@ -96,22 +111,23 @@ export default function ProfilePage() {
                 {status}
               </div>
             </div>
-          </div>
 
-          <div className="rounded-[2rem] border border-[#ece4d8] bg-white p-6 shadow-[0_18px_40px_rgba(17,17,17,0.05)]">
-            <div className="flex items-start gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-[1.35rem] bg-[#111111] text-white shadow-[0_12px_26px_rgba(17,17,17,0.16)]">
-                <Sparkles size={22} />
+            <div className="mt-6 grid gap-3">
+              <div className="rounded-[1.35rem] bg-[#faf7f1] p-4">
+                <p className="text-[10px] uppercase tracking-[0.18em] text-[#8a847a]">
+                  Available Balance
+                </p>
+                <p className="mt-2 text-xl font-semibold text-[#111111]">
+                  {formatMoney(balance)}
+                </p>
               </div>
 
-              <div>
-                <p className="text-sm font-semibold text-[#111111]">
-                  Premium profile state
+              <div className="rounded-[1.35rem] bg-[#faf7f1] p-4">
+                <p className="text-[10px] uppercase tracking-[0.18em] text-[#8a847a]">
+                  Account Number
                 </p>
-                <p className="mt-2 text-sm leading-7 text-[#666666]">
-                  Your profile now reflects the same real account record that
-                  your admin panel controls, making the customer experience feel
-                  more authentic and connected.
+                <p className="mt-2 text-sm font-semibold text-[#111111]">
+                  {accountNumber}
                 </p>
               </div>
             </div>
@@ -143,60 +159,116 @@ export default function ProfilePage() {
             })}
           </div>
 
-          <div className="rounded-[2rem] border border-[#ece4d8] bg-white p-6 shadow-[0_18px_40px_rgba(17,17,17,0.05)]">
-            <p className="text-[11px] uppercase tracking-[0.18em] text-[#948d83]">
-              Account Summary
-            </p>
-            <h2 className="mt-2 text-xl font-semibold tracking-[-0.02em] text-[#111111]">
-              Personal account overview
-            </h2>
-
-            <div className="mt-5 space-y-4">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-[#666666]">Available Balance</span>
-                <span className="font-medium text-[#111111]">
-                  ${balance.toLocaleString()}
-                </span>
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="rounded-[1.6rem] border border-[#ece4d8] bg-white p-5 shadow-[0_14px_34px_rgba(17,17,17,0.05)]">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#f4ede2] text-[#111111]">
+                <Wallet size={18} />
               </div>
+              <p className="mt-4 text-xs uppercase tracking-[0.16em] text-[#8e877c]">
+                Balance
+              </p>
+              <p className="mt-2 text-lg font-semibold text-[#111111]">
+                {formatMoney(balance)}
+              </p>
+            </div>
 
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-[#666666]">Account Number</span>
-                <span className="font-medium text-[#111111]">
-                  {accountNumber}
-                </span>
+            <div className="rounded-[1.6rem] border border-[#ece4d8] bg-white p-5 shadow-[0_14px_34px_rgba(17,17,17,0.05)]">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#f4ede2] text-[#111111]">
+                <ReceiptText size={18} />
               </div>
+              <p className="mt-4 text-xs uppercase tracking-[0.16em] text-[#8e877c]">
+                Transactions
+              </p>
+              <p className="mt-2 text-lg font-semibold text-[#111111]">
+                {transactionCount}
+              </p>
+            </div>
 
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-[#666666]">Notification Count</span>
-                <span className="font-medium text-[#111111]">
-                  {notifications.length}
-                </span>
+            <div className="rounded-[1.6rem] border border-[#ece4d8] bg-white p-5 shadow-[0_14px_34px_rgba(17,17,17,0.05)]">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#f4ede2] text-[#111111]">
+                <Bell size={18} />
               </div>
-
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-[#666666]">Account Status</span>
-                <span className="font-medium capitalize text-[#111111]">
-                  {status}
-                </span>
-              </div>
+              <p className="mt-4 text-xs uppercase tracking-[0.16em] text-[#8e877c]">
+                Notifications
+              </p>
+              <p className="mt-2 text-lg font-semibold text-[#111111]">
+                {notificationCount}
+              </p>
             </div>
           </div>
 
           <div className="rounded-[2rem] border border-[#ece4d8] bg-white p-6 shadow-[0_18px_40px_rgba(17,17,17,0.05)]">
-            <div className="flex items-start gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-[1.35rem] bg-[#111111] text-white shadow-[0_12px_26px_rgba(17,17,17,0.16)]">
-                <Wallet size={22} />
+            <p className="text-[11px] uppercase tracking-[0.18em] text-[#948d83]">
+              Latest Account Activity
+            </p>
+            <h2 className="mt-2 text-xl font-semibold tracking-[-0.03em] text-[#111111]">
+              Recent profile-linked activity
+            </h2>
+
+            <div className="mt-5 grid gap-4 md:grid-cols-2">
+              <div className="rounded-[1.4rem] bg-[#faf7f1] p-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#111111] text-white">
+                    <ReceiptText size={17} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-[#111111]">
+                      Latest Transaction
+                    </p>
+                    {!latestTransaction ? (
+                      <p className="mt-1 text-sm text-[#666666]">
+                        No transaction recorded yet.
+                      </p>
+                    ) : (
+                      <>
+                        <p className="mt-1 text-sm text-[#666666]">
+                          {latestTransaction.type === "credit"
+                            ? latestTransaction.title || "Account Credit"
+                            : latestTransaction.type === "transfer"
+                            ? `Transfer to ${latestTransaction.recipientName || "Recipient"}`
+                            : latestTransaction.title || "Transaction"}
+                        </p>
+                        <p
+                          className={`mt-2 text-sm font-semibold ${
+                            latestTransaction.type === "credit"
+                              ? "text-green-600"
+                              : "text-red-600"
+                          }`}
+                        >
+                          {latestTransaction.type === "credit" ? "+" : "-"}
+                          {formatMoney(latestTransaction.amount)}
+                        </p>
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
 
-              <div>
-                <p className="text-sm font-semibold text-[#111111]">
-                  Account-linked identity
-                </p>
-                <p className="mt-2 text-sm leading-7 text-[#666666]">
-                  Your profile information is now synchronized with the account
-                  data managed from the admin workspace, including balance,
-                  account number, and status.
-                </p>
+              <div className="rounded-[1.4rem] bg-[#faf7f1] p-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#111111] text-white">
+                    <Landmark size={17} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-[#111111]">
+                      Latest Notification
+                    </p>
+                    {!latestNotification ? (
+                      <p className="mt-1 text-sm text-[#666666]">
+                        No notification available yet.
+                      </p>
+                    ) : (
+                      <>
+                        <p className="mt-1 text-sm text-[#666666]">
+                          {latestNotification.title}
+                        </p>
+                        <p className="mt-2 text-xs text-[#8a847a]">
+                          {latestNotification.createdAtLabel || "Recently added"}
+                        </p>
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>

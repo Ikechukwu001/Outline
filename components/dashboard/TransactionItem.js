@@ -13,7 +13,7 @@ export default function TransactionItem({
 
       <p
         className={`shrink-0 text-sm font-semibold ${
-          amountType === "credit" ? "text-green-600" : "text-[#111111]"
+          amountType === "credit" ? "text-green-600" : "text-red-600"
         }`}
       >
         {amount}

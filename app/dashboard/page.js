@@ -84,19 +84,25 @@ export default function DashboardPage() {
     },
   ];
 
-  const mappedTransactions = transactions.map((item) => ({
-    id: item.id,
-    title:
-      item.type === "transfer"
+  const mappedTransactions = transactions.map((item) => {
+    const isCredit = item.type === "credit";
+
+    return {
+      id: item.id,
+      title: isCredit
+        ? item.title || "Account Credit"
+        : item.type === "transfer"
         ? `Transfer to ${item.recipientName || "Recipient"}`
         : item.title || "Transaction",
-    subtitle:
-      item.bankName
+      subtitle: isCredit
+        ? item.description || "Credit received"
+        : item.bankName
         ? `${item.bankName} • ${item.status || "completed"}`
         : item.description || "Completed",
-    amount: `-$${Number(item.amount || 0).toLocaleString()}`,
-    amountType: "debit",
-  }));
+      amount: `${isCredit ? "+" : "-"}$${Number(item.amount || 0).toLocaleString()}`,
+      amountType: isCredit ? "credit" : "debit",
+    };
+  });
 
   if (loadingData) {
     return (

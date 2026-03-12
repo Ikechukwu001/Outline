@@ -149,26 +149,8 @@ export default function CardsPage() {
           </div>
 
           <div className="rounded-[2rem] border border-[#ece4d8] bg-white p-6 shadow-[0_14px_34px_rgba(17,17,17,0.05)]">
-            <div className="flex items-start gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-[1.35rem] bg-[#111111] text-white shadow-[0_12px_26px_rgba(17,17,17,0.16)]">
-                <Sparkles size={22} />
-              </div>
-
-              <div>
-                <p className="text-sm font-semibold text-[#111111]">
-                  Luxury digital banking feel
-                </p>
-                <p className="mt-2 text-sm leading-7 text-[#666666]">
-                  Your card experience now reflects the account data managed from
-                  the admin panel, making the system feel more connected and real.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-[2rem] border border-[#ece4d8] bg-white p-6 shadow-[0_14px_34px_rgba(17,17,17,0.05)]">
             <p className="text-[11px] uppercase tracking-[0.18em] text-[#948d83]">
-              Demo Controls
+              Card Controls
             </p>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <button

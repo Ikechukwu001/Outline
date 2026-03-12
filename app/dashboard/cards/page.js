@@ -47,7 +47,7 @@ export default function CardsPage() {
                   Premium Card
                 </p>
                 <h2 className="mt-5 text-2xl font-semibold tracking-[0.18em] sm:text-3xl">
-                  REFUND ACCOUNT
+                  BANK CARD PLATINUM
                 </h2>
               </div>
 

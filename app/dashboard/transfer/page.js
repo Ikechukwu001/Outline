@@ -393,61 +393,6 @@ export default function TransferPage() {
               </div>
             </div>
 
-            <div className="rounded-[2rem] border border-[#e9dfd1] bg-white p-6 shadow-[0_18px_40px_rgba(17,17,17,0.05)]">
-              <div className="flex items-start gap-4">
-                <div className="flex h-14 w-14 items-center justify-center rounded-[1.35rem] bg-[#111111] text-white shadow-[0_12px_26px_rgba(17,17,17,0.16)]">
-                  <BadgeCheck size={22} />
-                </div>
-
-                <div>
-                  <p className="text-sm font-semibold text-[#111111]">
-                    Balance-aware transfer logic
-                  </p>
-                  <p className="mt-2 text-sm leading-7 text-[#666666]">
-                    This transfer flow checks your available balance before
-                    processing. If funds are insufficient, the transfer is blocked
-                    and a proper banking-style warning is shown.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-[2rem] border border-[#e9dfd1] bg-white p-6 shadow-[0_18px_40px_rgba(17,17,17,0.05)]">
-              <div className="flex items-start gap-4">
-                <div className="flex h-14 w-14 items-center justify-center rounded-[1.35rem] bg-[#111111] text-white shadow-[0_12px_26px_rgba(17,17,17,0.16)]">
-                  <Landmark size={22} />
-                </div>
-
-                <div>
-                  <p className="text-sm font-semibold text-[#111111]">
-                    Professional transfer record
-                  </p>
-                  <p className="mt-2 text-sm leading-7 text-[#666666]">
-                    Successful transfers are recorded in your transaction history
-                    and immediately reflected in your dashboard balance.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-[2rem] border border-[#e9dfd1] bg-white p-6 shadow-[0_18px_40px_rgba(17,17,17,0.05)]">
-              <div className="flex items-start gap-4">
-                <div className="flex h-14 w-14 items-center justify-center rounded-[1.35rem] bg-[#111111] text-white shadow-[0_12px_26px_rgba(17,17,17,0.16)]">
-                  <FileText size={22} />
-                </div>
-
-                <div>
-                  <p className="text-sm font-semibold text-[#111111]">
-                    Premium receipt included
-                  </p>
-                  <p className="mt-2 text-sm leading-7 text-[#666666]">
-                    Every successful transfer can now display a polished receipt
-                    popup containing the key transfer details for a more realistic
-                    banking experience.
-                  </p>
-                </div>
-              </div>
-            </div>
           </div>
         </section>
       </div>

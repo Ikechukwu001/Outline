@@ -73,18 +73,6 @@ export default function DashboardSidebar() {
             );
           })}
         </nav>
-
-        <div className="mt-8 rounded-[1.6rem] bg-[#f6f2eb] p-4">
-          <p className="text-[11px] uppercase tracking-[0.18em] text-[#948d83]">
-            Premium Access
-          </p>
-          <p className="mt-2 text-sm font-medium text-[#111111]">
-            Clean banking workflows
-          </p>
-          <p className="mt-2 text-sm leading-6 text-[#666666]">
-            Your dashboard navigation now feels closer to a real fintech product.
-          </p>
-        </div>
       </div>
     </aside>
   );

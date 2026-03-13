@@ -24,6 +24,7 @@ import AdminBalanceEditor from "@/components/admin/AdminBalanceEditor";
 import AdminAccountNumberEditor from "@/components/admin/AdminAccountNumberEditor";
 import AdminNotificationForm from "@/components/admin/AdminNotificationForm";
 import AdminUserNotificationsList from "@/components/admin/AdminUserNotificationsList";
+import AdminStatusEditor from "@/components/admin/AdminStatusEditor";
 
 function formatCreatedAt(value) {
   if (!value) return "Recently added";
@@ -61,6 +62,7 @@ export default function AdminUserDetailsPage() {
   const [savingBalance, setSavingBalance] = useState(false);
   const [savingAccountNumber, setSavingAccountNumber] = useState(false);
   const [sendingNotification, setSendingNotification] = useState(false);
+  const [savingStatus, setSavingStatus] = useState(false);
 
   const [feedback, setFeedback] = useState({
     type: "",
@@ -137,98 +139,98 @@ export default function AdminUserDetailsPage() {
     }
   };
 
-const handleBalanceUpdate = async (e) => {
-  e.preventDefault();
-  setSavingBalance(true);
-  setFeedback({ type: "", text: "" });
+  const handleBalanceUpdate = async (e) => {
+    e.preventDefault();
+    setSavingBalance(true);
+    setFeedback({ type: "", text: "" });
 
-  try {
-    const numericAmount = Number(fundAmount);
+    try {
+      const numericAmount = Number(fundAmount);
 
-    if (Number.isNaN(numericAmount) || numericAmount <= 0) {
-      setFeedback({
-        type: "error",
-        text: "Please enter a valid amount to add.",
-      });
-      return;
-    }
-
-    const userRef = doc(db, "users", uid);
-    const transactionRef = doc(collection(db, "transactions"));
-    const notificationRef = doc(collection(db, "notifications"));
-
-    let updatedBalance = 0;
-    let fundedUserName = userData?.fullName || "Customer";
-
-    await runTransaction(db, async (transaction) => {
-      const userSnap = await transaction.get(userRef);
-
-      if (!userSnap.exists()) {
-        throw new Error("USER_NOT_FOUND");
+      if (Number.isNaN(numericAmount) || numericAmount <= 0) {
+        setFeedback({
+          type: "error",
+          text: "Please enter a valid amount to add.",
+        });
+        return;
       }
 
-      const currentUserData = userSnap.data();
-      const currentBalance = Number(currentUserData.balance || 0);
+      const userRef = doc(db, "users", uid);
+      const transactionRef = doc(collection(db, "transactions"));
+      const notificationRef = doc(collection(db, "notifications"));
 
-      fundedUserName = currentUserData.fullName || fundedUserName;
-      updatedBalance = currentBalance + numericAmount;
+      let updatedBalance = 0;
+      let fundedUserName = userData?.fullName || "Customer";
 
-      transaction.update(userRef, {
+      await runTransaction(db, async (transaction) => {
+        const userSnap = await transaction.get(userRef);
+
+        if (!userSnap.exists()) {
+          throw new Error("USER_NOT_FOUND");
+        }
+
+        const currentUserData = userSnap.data();
+        const currentBalance = Number(currentUserData.balance || 0);
+
+        fundedUserName = currentUserData.fullName || fundedUserName;
+        updatedBalance = currentBalance + numericAmount;
+
+        transaction.update(userRef, {
+          balance: updatedBalance,
+        });
+
+        transaction.set(transactionRef, {
+          userId: uid,
+          type: "credit",
+          title: "Account Funding",
+          amount: numericAmount,
+          description: "Admin top up",
+          status: "completed",
+          createdAt: serverTimestamp(),
+        });
+
+        transaction.set(notificationRef, {
+          userId: uid,
+          title: "Account Credited",
+          message: `Your account has been credited with $${numericAmount.toLocaleString()}.`,
+          read: false,
+          createdAt: serverTimestamp(),
+        });
+      });
+
+      setUserData((prev) => ({
+        ...prev,
         balance: updatedBalance,
+      }));
+
+      setNotifications((prev) => [
+        {
+          id: notificationRef.id,
+          userId: uid,
+          title: "Account Credited",
+          message: `Your account has been credited with $${numericAmount.toLocaleString()}.`,
+          read: false,
+          createdAtLabel: "Recently added",
+        },
+        ...prev,
+      ]);
+
+      setFundAmount("");
+
+      setFeedback({
+        type: "success",
+        text: `${fundedUserName}'s balance was funded successfully.`,
       });
-
-      transaction.set(transactionRef, {
-        userId: uid,
-        type: "credit",
-        title: "Account Funding",
-        amount: numericAmount,
-        description: "Admin top up",
-        status: "completed",
-        createdAt: serverTimestamp(),
+    } catch (error) {
+      console.error("Balance funding failed:", error);
+      setFeedback({
+        type: "error",
+        text: "Failed to add funds to this account.",
       });
-
-      transaction.set(notificationRef, {
-        userId: uid,
-        title: "Account Credited",
-        message: `Your account has been credited with $${numericAmount.toLocaleString()}.`,
-        read: false,
-        createdAt: serverTimestamp(),
-      });
-    });
-
-    setUserData((prev) => ({
-      ...prev,
-      balance: updatedBalance,
-    }));
-
-    setNotifications((prev) => [
-      {
-        id: notificationRef.id,
-        userId: uid,
-        title: "Account Credited",
-        message: `Your account has been credited with $${numericAmount.toLocaleString()}.`,
-        read: false,
-        createdAtLabel: "Recently added",
-      },
-      ...prev,
-    ]);
-
-    setFundAmount("");
-
-    setFeedback({
-      type: "success",
-      text: `${fundedUserName}'s balance was funded successfully.`,
-    });
-  } catch (error) {
-    console.error("Balance funding failed:", error);
-    setFeedback({
-      type: "error",
-      text: "Failed to add funds to this account.",
-    });
-  } finally {
-    setSavingBalance(false);
-  }
-};
+    } finally {
+      setSavingBalance(false);
+    }
+  };
 
   const handleAccountNumberSave = async (e) => {
     e.preventDefault();
@@ -331,12 +333,44 @@ const handleBalanceUpdate = async (e) => {
     }
   };
 
+  const handleSetStatus = async (nextStatus) => {
+    setSavingStatus(true);
+    setFeedback({ type: "", text: "" });
+
+    try {
+      await updateDoc(doc(db, "users", uid), {
+        status: nextStatus,
+      });
+
+      setUserData((prev) => ({
+        ...prev,
+        status: nextStatus,
+      }));
+
+      setFeedback({
+        type: "success",
+        text:
+          nextStatus === "active"
+            ? "Card/account status set to active."
+            : "Card/account status set to deactivated.",
+      });
+    } catch (error) {
+      console.error("Status update failed:", error);
+      setFeedback({
+        type: "error",
+        text: "Failed to update card/account status.",
+      });
+    } finally {
+      setSavingStatus(false);
+    }
+  };
+
   return (
     <AdminShell>
       <div className="space-y-6">
         <AdminTopbar
           title="User account control"
-          subtitle="Manually manage this user’s balance, account number, and notifications from your admin workspace."
+          subtitle="Manually manage this user’s balance, account number, status, and notifications from your admin workspace."
           onLogout={handleLogout}
           loggingOut={loggingOut}
         />
@@ -380,6 +414,12 @@ const handleBalanceUpdate = async (e) => {
                 onSubmit={handleAccountNumberSave}
                 onGenerate={handleGenerateAccountNumber}
                 loading={savingAccountNumber}
+              />
+
+              <AdminStatusEditor
+                currentStatus={userData?.status || "active"}
+                onSetStatus={handleSetStatus}
+                loading={savingStatus}
               />
             </div>
 

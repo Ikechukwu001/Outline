@@ -1,10 +1,17 @@
 "use client";
 
-import { CreditCard, ShieldCheck, WalletCards, Sparkles } from "lucide-react";
+import {
+  CreditCard,
+  ShieldCheck,
+  WalletCards,
+  Snowflake,
+} from "lucide-react";
 import useDashboardData from "@/components/dashboard/useDashboardData";
 
 export default function CardsPage() {
   const { userName, userRecord, loadingData } = useDashboardData();
+
+  const isDeactivated = userRecord?.status === "deactivated";
 
   if (loadingData) {
     return (
@@ -40,7 +47,11 @@ export default function CardsPage() {
 
       <section className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
         <div className="space-y-5">
-          <div className="rounded-[2rem] bg-[#111111] p-6 text-white shadow-[0_24px_60px_rgba(17,17,17,0.12)] sm:p-7">
+          <div
+            className={`relative overflow-hidden rounded-[2rem] bg-[#111111] p-6 text-white shadow-[0_24px_60px_rgba(17,17,17,0.12)] sm:p-7 ${
+              isDeactivated ? "opacity-70" : ""
+            }`}
+          >
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-[11px] uppercase tracking-[0.28em] text-white/55">
@@ -81,6 +92,15 @@ export default function CardsPage() {
                 </div>
               </div>
             </div>
+
+            {isDeactivated && (
+              <div className="absolute inset-0 flex items-center justify-center bg-white/10 backdrop-blur-sm">
+                <div className="flex items-center gap-2 rounded-full border border-white/20 bg-white/90 px-4 py-2 text-sm font-semibold text-[#111111] shadow-[0_12px_30px_rgba(17,17,17,0.16)]">
+                  <Snowflake size={16} />
+                  Card Deactivated
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -103,7 +123,11 @@ export default function CardsPage() {
               <p className="mt-4 text-sm font-semibold text-[#111111]">
                 Card Status
               </p>
-              <p className="mt-2 text-2xl font-semibold capitalize tracking-[-0.02em] text-[#111111]">
+              <p
+                className={`mt-2 text-2xl font-semibold capitalize tracking-[-0.02em] ${
+                  isDeactivated ? "text-red-600" : "text-green-600"
+                }`}
+              >
                 {userRecord?.status || "active"}
               </p>
             </div>
@@ -141,7 +165,11 @@ export default function CardsPage() {
 
               <div className="flex items-center justify-between text-sm">
                 <span className="text-[#666666]">Status</span>
-                <span className="font-medium capitalize text-[#111111]">
+                <span
+                  className={`font-medium capitalize ${
+                    isDeactivated ? "text-red-600" : "text-green-600"
+                  }`}
+                >
                   {userRecord?.status || "active"}
                 </span>
               </div>
@@ -155,13 +183,15 @@ export default function CardsPage() {
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <button
                 type="button"
-                className="h-12 rounded-2xl border border-[#ddd3c5] bg-[#faf8f4] px-4 text-sm font-medium text-[#111111] transition hover:bg-white"
+                disabled={isDeactivated}
+                className="h-12 rounded-2xl border border-[#ddd3c5] bg-[#faf8f4] px-4 text-sm font-medium text-[#111111] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Freeze Card
               </button>
               <button
                 type="button"
-                className="h-12 rounded-2xl bg-[#111111] px-4 text-sm font-medium text-white shadow-[0_12px_26px_rgba(17,17,17,0.16)] transition hover:opacity-95"
+                disabled={isDeactivated}
+                className="h-12 rounded-2xl bg-[#111111] px-4 text-sm font-medium text-white shadow-[0_12px_26px_rgba(17,17,17,0.16)] transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 View Details
               </button>

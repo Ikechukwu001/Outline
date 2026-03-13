@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Landmark,
   ShieldCheck,
@@ -8,6 +8,7 @@ import {
   BadgeCheck,
   Wallet,
   FileText,
+  Lock,
 } from "lucide-react";
 import {
   addDoc,
@@ -24,6 +25,23 @@ function generateReference() {
   const randomPart = Math.random().toString(36).slice(2, 8).toUpperCase();
   const timePart = Date.now().toString().slice(-6);
   return `RA-${randomPart}${timePart}`;
+}
+
+const KNOWN_RECIPIENTS = [
+  {
+    bankName: "Chase Bank USA",
+    accountNumber: "4068217359",
+    accountName: "Olivia Bennett",
+  },
+  {
+    bankName: "Barclays UK",
+    accountNumber: "5179042863",
+    accountName: "Ethan Carter",
+  },
+];
+
+function normalizeText(value) {
+  return value.trim().toLowerCase();
 }
 
 export default function TransferPage() {
@@ -44,9 +62,35 @@ export default function TransferPage() {
 
   const { userName, userRecord, loadingData } = useDashboardData();
 
+  const isDeactivated = userRecord?.status === "deactivated";
+
+  const matchedRecipient = useMemo(() => {
+    const normalizedBank = normalizeText(bankName);
+    const normalizedAccount = accountNumber.trim();
+
+    return (
+      KNOWN_RECIPIENTS.find(
+        (item) =>
+          normalizeText(item.bankName) === normalizedBank &&
+          item.accountNumber === normalizedAccount
+      ) || null
+    );
+  }, [bankName, accountNumber]);
+
+  useEffect(() => {
+    if (matchedRecipient) {
+      setRecipientName(matchedRecipient.accountName);
+    }
+  }, [matchedRecipient]);
+
   const handleAccountNumberChange = (value) => {
     const cleaned = value.replace(/\D/g, "").slice(0, 10);
     setAccountNumber(cleaned);
+  };
+
+  const handleRecipientNameChange = (value) => {
+    if (matchedRecipient) return;
+    setRecipientName(value);
   };
 
   const resetForm = () => {
@@ -69,6 +113,14 @@ export default function TransferPage() {
         setFeedback({
           type: "error",
           text: "Unable to verify your account session.",
+        });
+        return;
+      }
+
+      if (isDeactivated) {
+        setFeedback({
+          type: "error",
+          text: "Your card/account is currently deactivated. Transfers are unavailable at this time.",
         });
         return;
       }
@@ -236,6 +288,13 @@ export default function TransferPage() {
           </div>
         </section>
 
+        {isDeactivated && (
+          <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            Your card/account is currently deactivated. Transfers are disabled
+            until the account is reactivated. Please contact support for assistance.
+          </div>
+        )}
+
         {feedback.text && (
           <div
             className={`rounded-2xl px-4 py-3 text-sm ${
@@ -275,7 +334,8 @@ export default function TransferPage() {
                     value={bankName}
                     onChange={(e) => setBankName(e.target.value)}
                     placeholder="Enter recipient bank name"
-                    className="h-14 w-full rounded-2xl border border-[#e8e1d5] bg-[#fcfbf8] px-4 text-sm text-[#111111] outline-none transition placeholder:text-[#aaa294] focus:border-[#111111] focus:bg-white"
+                    disabled={isDeactivated}
+                    className="h-14 w-full rounded-2xl border border-[#e8e1d5] bg-[#fcfbf8] px-4 text-sm text-[#111111] outline-none transition placeholder:text-[#aaa294] focus:border-[#111111] focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
                   />
                 </div>
 
@@ -288,7 +348,8 @@ export default function TransferPage() {
                     value={accountNumber}
                     onChange={(e) => handleAccountNumberChange(e.target.value)}
                     placeholder="Enter 10-digit account number"
-                    className="h-14 w-full rounded-2xl border border-[#e8e1d5] bg-[#fcfbf8] px-4 text-sm tracking-[0.12em] text-[#111111] outline-none transition placeholder:tracking-normal placeholder:text-[#aaa294] focus:border-[#111111] focus:bg-white"
+                    disabled={isDeactivated}
+                    className="h-14 w-full rounded-2xl border border-[#e8e1d5] bg-[#fcfbf8] px-4 text-sm tracking-[0.12em] text-[#111111] outline-none transition placeholder:tracking-normal placeholder:text-[#aaa294] focus:border-[#111111] focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
                   />
                 </div>
 
@@ -299,10 +360,16 @@ export default function TransferPage() {
                   <input
                     type="text"
                     value={recipientName}
-                    onChange={(e) => setRecipientName(e.target.value)}
+                    onChange={(e) => handleRecipientNameChange(e.target.value)}
                     placeholder="Enter recipient full name"
-                    className="h-14 w-full rounded-2xl border border-[#e8e1d5] bg-[#fcfbf8] px-4 text-sm text-[#111111] outline-none transition placeholder:text-[#aaa294] focus:border-[#111111] focus:bg-white"
+                    disabled={isDeactivated || !!matchedRecipient}
+                    className="h-14 w-full rounded-2xl border border-[#e8e1d5] bg-[#fcfbf8] px-4 text-sm text-[#111111] outline-none transition placeholder:text-[#aaa294] focus:border-[#111111] focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
                   />
+                  {matchedRecipient && (
+                    <p className="mt-2 text-xs text-[#6a6a6a]">
+                      Transfer details match a known recipient. 
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -316,7 +383,8 @@ export default function TransferPage() {
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                     placeholder="0.00"
-                    className="h-16 w-full rounded-2xl border border-[#e8e1d5] bg-[#fcfbf8] px-4 text-lg font-semibold tracking-[-0.02em] text-[#111111] outline-none transition placeholder:text-[#aaa294] focus:border-[#111111] focus:bg-white"
+                    disabled={isDeactivated}
+                    className="h-16 w-full rounded-2xl border border-[#e8e1d5] bg-[#fcfbf8] px-4 text-lg font-semibold tracking-[-0.02em] text-[#111111] outline-none transition placeholder:text-[#aaa294] focus:border-[#111111] focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
                   />
                 </div>
 
@@ -329,18 +397,23 @@ export default function TransferPage() {
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Add a payment note"
-                    className="h-16 w-full rounded-2xl border border-[#e8e1d5] bg-[#fcfbf8] px-4 text-sm text-[#111111] outline-none transition placeholder:text-[#aaa294] focus:border-[#111111] focus:bg-white"
+                    disabled={isDeactivated}
+                    className="h-16 w-full rounded-2xl border border-[#e8e1d5] bg-[#fcfbf8] px-4 text-sm text-[#111111] outline-none transition placeholder:text-[#aaa294] focus:border-[#111111] focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
                   />
                 </div>
 
                 <div className="md:col-span-2 pt-1">
                   <button
                     type="submit"
-                    disabled={submitting}
-                    className="inline-flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-[#111111] px-4 text-sm font-medium text-white shadow-[0_14px_30px_rgba(17,17,17,0.18)] transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-70"
+                    disabled={submitting || isDeactivated}
+                    className="inline-flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-[#111111] px-4 text-sm font-medium text-white shadow-[0_14px_30px_rgba(17,17,17,0.18)] transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    <SendHorizonal size={18} />
-                    {submitting ? "Processing transfer..." : "Transfer Funds"}
+                    {isDeactivated ? <Lock size={18} /> : <SendHorizonal size={18} />}
+                    {isDeactivated
+                      ? "Transfers Disabled"
+                      : submitting
+                      ? "Processing transfer..."
+                      : "Transfer Funds"}
                   </button>
                 </div>
               </form>
@@ -392,7 +465,6 @@ export default function TransferPage() {
                 </div>
               </div>
             </div>
-
           </div>
         </section>
       </div>

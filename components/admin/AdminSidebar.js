@@ -4,8 +4,6 @@ import { usePathname } from "next/navigation";
 import {
   LayoutGrid,
   Users,
-  Bell,
-  ShieldCheck,
 } from "lucide-react";
 import AdminNavItem from "@/components/admin/AdminNavItem";
 
@@ -19,16 +17,6 @@ const navItems = [
     label: "Users",
     href: "/admin/users",
     icon: Users,
-  },
-  {
-    label: "Notifications",
-    href: "/admin/notifications",
-    icon: Bell,
-  },
-  {
-    label: "Access",
-    href: "/admin/access",
-    icon: ShieldCheck,
   },
 ];
 

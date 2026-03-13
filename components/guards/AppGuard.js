@@ -6,6 +6,16 @@ import { usePathname, useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase";
 import { checkIsAdmin } from "@/lib/admin";
 
+function requiresEmailVerification(user) {
+  if (!user) return false;
+
+  const usesPasswordProvider = user.providerData.some(
+    (provider) => provider.providerId === "password"
+  );
+
+  return usesPasswordProvider && !user.emailVerified;
+}
+
 export default function AppGuard({ children }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -20,80 +30,103 @@ export default function AppGuard({ children }) {
       const isAdminRoute = pathname.startsWith("/admin");
       const isAdminLoginRoute = pathname === "/admin/login";
 
-      // PUBLIC LANDING PAGE RULES
-      if (isHomeRoute) {
-        if (!user) {
-          setChecking(false);
-          return;
-        }
+      try {
+        if (isHomeRoute) {
+          if (!user) {
+            setChecking(false);
+            return;
+          }
 
-        const isAdmin = await checkIsAdmin(user.uid);
+          if (requiresEmailVerification(user)) {
+            setChecking(false);
+            return;
+          }
 
-        if (isAdmin) {
-          router.replace("/admin");
-          return;
-        }
+          const isAdmin = await checkIsAdmin(user.uid);
 
-        router.replace("/dashboard");
-        return;
-      }
+          if (isAdmin) {
+            router.replace("/admin");
+            return;
+          }
 
-      // CUSTOMER DASHBOARD RULES
-      if (isDashboardRoute) {
-        if (!user) {
-          router.replace("/");
-          return;
-        }
-
-        const isAdmin = await checkIsAdmin(user.uid);
-
-        if (isAdmin) {
-          router.replace("/admin");
-          return;
-        }
-
-        setChecking(false);
-        return;
-      }
-
-      // ADMIN LOGIN RULES
-      if (isAdminLoginRoute) {
-        if (!user) {
-          setChecking(false);
-          return;
-        }
-
-        const isAdmin = await checkIsAdmin(user.uid);
-
-        if (isAdmin) {
-          router.replace("/admin");
-          return;
-        }
-
-        router.replace("/dashboard");
-        return;
-      }
-
-      // ADMIN PANEL RULES
-      if (isAdminRoute) {
-        if (!user) {
-          router.replace("/admin/login");
-          return;
-        }
-
-        const isAdmin = await checkIsAdmin(user.uid);
-
-        if (!isAdmin) {
           router.replace("/dashboard");
           return;
         }
 
-        setChecking(false);
-        return;
-      }
+        if (isDashboardRoute) {
+          if (!user) {
+            router.replace("/");
+            return;
+          }
 
-      // ANY OTHER ROUTE
-      setChecking(false);
+          if (requiresEmailVerification(user)) {
+            await auth.signOut();
+            router.replace("/");
+            return;
+          }
+
+          const isAdmin = await checkIsAdmin(user.uid);
+
+          if (isAdmin) {
+            router.replace("/admin");
+            return;
+          }
+
+          setChecking(false);
+          return;
+        }
+
+        if (isAdminLoginRoute) {
+          if (!user) {
+            setChecking(false);
+            return;
+          }
+
+          if (requiresEmailVerification(user)) {
+            await auth.signOut();
+            router.replace("/");
+            return;
+          }
+
+          const isAdmin = await checkIsAdmin(user.uid);
+
+          if (isAdmin) {
+            router.replace("/admin");
+            return;
+          }
+
+          router.replace("/dashboard");
+          return;
+        }
+
+        if (isAdminRoute) {
+          if (!user) {
+            router.replace("/admin/login");
+            return;
+          }
+
+          if (requiresEmailVerification(user)) {
+            await auth.signOut();
+            router.replace("/");
+            return;
+          }
+
+          const isAdmin = await checkIsAdmin(user.uid);
+
+          if (!isAdmin) {
+            router.replace("/dashboard");
+            return;
+          }
+
+          setChecking(false);
+          return;
+        }
+
+        setChecking(false);
+      } catch (error) {
+        console.error("AppGuard error:", error);
+        setChecking(false);
+      }
     });
 
     return () => unsubscribe();

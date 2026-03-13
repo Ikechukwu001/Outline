@@ -11,6 +11,8 @@ import {
   Bell,
   ReceiptText,
   Landmark,
+  Crown,
+  CheckCircle2,
 } from "lucide-react";
 import useDashboardData from "@/components/dashboard/useDashboardData";
 
@@ -19,8 +21,14 @@ function formatMoney(value) {
 }
 
 export default function ProfilePage() {
-  const { userName, userEmail, userRecord, notifications, transactions, loadingData } =
-    useDashboardData();
+  const {
+    userName,
+    userEmail,
+    userRecord,
+    notifications,
+    transactions,
+    loadingData,
+  } = useDashboardData();
 
   if (loadingData) {
     return (
@@ -44,33 +52,51 @@ export default function ProfilePage() {
   const latestTransaction = transactions[0] || null;
   const latestNotification = notifications[0] || null;
 
-  const profileCards = [
+  const profileDetails = [
     {
-      title: "Full Name",
+      label: "Full Name",
       value: userName || "Customer",
       icon: UserRound,
     },
     {
-      title: "Email Address",
+      label: "Email Address",
       value: userEmail || "No email",
       icon: Mail,
     },
     {
-      title: "Account Number",
+      label: "Account Number",
       value: accountNumber,
       icon: Hash,
     },
     {
-      title: "Status",
+      label: "Account Status",
       value: status,
       icon: BadgeCheck,
+    },
+  ];
+
+  const quickStats = [
+    {
+      label: "Available Balance",
+      value: formatMoney(balance),
+      icon: Wallet,
+    },
+    {
+      label: "Transactions",
+      value: transactionCount,
+      icon: ReceiptText,
+    },
+    {
+      label: "Notifications",
+      value: notificationCount,
+      icon: Bell,
     },
   ];
 
   return (
     <div className="space-y-6">
       <section className="relative overflow-hidden rounded-[2rem] border border-[#e9dfd1] bg-white/92 p-6 shadow-[0_24px_60px_rgba(17,17,17,0.05)] sm:p-7">
-        <div className="absolute right-[-30px] top-[-20px] h-32 w-32 rounded-full bg-[#eadfc8]/55 blur-3xl" />
+        <div className="absolute right-[-30px] top-[-20px] h-36 w-36 rounded-full bg-[#eadfc8]/60 blur-3xl" />
         <div className="absolute bottom-[-30px] left-[-20px] h-28 w-28 rounded-full bg-[#efe8dd]/70 blur-3xl" />
 
         <div className="relative flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -79,69 +105,131 @@ export default function ProfilePage() {
               Profile
             </p>
             <h1 className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-[#111111] sm:text-[2rem]">
-              Your banking identity
+              Personal banking identity
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-7 text-[#666666]">
-              Review your personal account identity, banking record details, and
-              customer account summary in one polished profile space.
+              A premium view of your account ownership, banking identity,
+              account details, and recent profile-linked activity.
             </p>
           </div>
 
           <div className="inline-flex items-center gap-2 self-start rounded-full border border-[#e9e1d5] bg-[#faf8f4] px-4 py-2.5 text-xs font-medium uppercase tracking-[0.18em] text-[#6e695f]">
             <ShieldCheck size={15} />
-            Verified profile state
+            Verified customer identity
           </div>
         </div>
       </section>
 
-      <section className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
+      <section className="grid gap-5 xl:grid-cols-[0.88fr_1.12fr]">
         <div className="space-y-5">
-          <div className="rounded-[2rem] border border-[#e9dfd1] bg-white p-6 shadow-[0_18px_40px_rgba(17,17,17,0.05)]">
-            <div className="flex flex-col items-center text-center">
-              <div className="flex h-24 w-24 items-center justify-center rounded-[2rem] bg-[#111111] text-2xl font-semibold uppercase text-white shadow-[0_16px_30px_rgba(17,17,17,0.18)]">
-                {initials}
+          <div className="relative overflow-hidden rounded-[2rem] bg-[#111111] p-6 text-white shadow-[0_28px_70px_rgba(17,17,17,0.16)]">
+            <div className="absolute right-[-30px] top-[-20px] h-40 w-40 rounded-full bg-[#d3b88a]/18 blur-3xl" />
+            <div className="absolute bottom-[-40px] left-[-20px] h-40 w-40 rounded-full bg-white/5 blur-3xl" />
+
+            <div className="relative">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.24em] text-white/50">
+                    REFUND ACCOUNT
+                  </p>
+                  <h2 className="mt-4 text-2xl font-semibold tracking-[-0.03em]">
+                    {userName || "Customer"}
+                  </h2>
+                  <p className="mt-2 text-sm text-white/70">{userEmail}</p>
+                </div>
+
+                <div className="flex h-14 w-14 items-center justify-center rounded-[1.35rem] bg-white/10 text-lg font-semibold uppercase text-white backdrop-blur">
+                  {initials}
+                </div>
               </div>
 
-              <h2 className="mt-5 text-2xl font-semibold tracking-[-0.03em] text-[#111111]">
-                {userName || "Customer"}
-              </h2>
-              <p className="mt-2 text-sm text-[#666666]">{userEmail}</p>
+              <div className="mt-8 grid gap-3">
+                <div className="rounded-[1.35rem] bg-white/6 px-4 py-4">
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-white/45">
+                    Account Number
+                  </p>
+                  <p className="mt-2 text-sm font-medium text-white/90">
+                    {accountNumber}
+                  </p>
+                </div>
 
-              <div className="mt-5 rounded-full bg-[#f3eee6] px-4 py-2 text-xs font-medium uppercase tracking-[0.16em] text-[#6e695f]">
-                {status}
+                <div className="rounded-[1.35rem] bg-white/6 px-4 py-4">
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-white/45">
+                    Current Status
+                  </p>
+                  <div className="mt-2 flex items-center gap-2 text-white/90">
+                    <CheckCircle2 size={16} className="text-green-400" />
+                    <span className="text-sm font-medium capitalize">
+                      {status}
+                    </span>
+                  </div>
+                </div>
               </div>
-            </div>
 
-            <div className="mt-6 grid gap-3">
-              <div className="rounded-[1.35rem] bg-[#faf7f1] p-4">
-                <p className="text-[10px] uppercase tracking-[0.18em] text-[#8a847a]">
-                  Available Balance
-                </p>
-                <p className="mt-2 text-xl font-semibold text-[#111111]">
-                  {formatMoney(balance)}
-                </p>
-              </div>
-
-              <div className="rounded-[1.35rem] bg-[#faf7f1] p-4">
-                <p className="text-[10px] uppercase tracking-[0.18em] text-[#8a847a]">
-                  Account Number
-                </p>
-                <p className="mt-2 text-sm font-semibold text-[#111111]">
-                  {accountNumber}
-                </p>
+              <div className="mt-8 flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.18em] text-white/75">
+                <Crown size={14} />
+                Premium customer profile
               </div>
             </div>
           </div>
         </div>
 
         <div className="space-y-5">
+          <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
+            <div className="rounded-[2rem] border border-[#e9dfd1] bg-white p-6 shadow-[0_18px_40px_rgba(17,17,17,0.05)]">
+              <p className="text-[11px] uppercase tracking-[0.18em] text-[#948d83]">
+                Account Value
+              </p>
+              <h2 className="mt-2 text-xl font-semibold tracking-[-0.03em] text-[#111111]">
+                Balance spotlight
+              </h2>
+
+              <div className="mt-6 rounded-[1.6rem] bg-[#faf7f1] p-5">
+                <p className="text-[10px] uppercase tracking-[0.18em] text-[#8a847a]">
+                  Available Balance
+                </p>
+                <p className="mt-3 text-4xl font-semibold tracking-[-0.04em] text-[#111111]">
+                  {formatMoney(balance)}
+                </p>
+                <p className="mt-3 text-sm leading-6 text-[#666666]">
+                  This reflects the current balance after credits, transfers, and
+                  admin-managed account updates.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-4">
+              {quickStats.map((item) => {
+                const Icon = item.icon;
+
+                return (
+                  <div
+                    key={item.label}
+                    className="rounded-[1.6rem] border border-[#ece4d8] bg-white p-5 shadow-[0_14px_34px_rgba(17,17,17,0.05)]"
+                  >
+                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#f4ede2] text-[#111111]">
+                      <Icon size={18} />
+                    </div>
+
+                    <p className="mt-4 text-xs uppercase tracking-[0.16em] text-[#8e877c]">
+                      {item.label}
+                    </p>
+                    <p className="mt-2 text-lg font-semibold text-[#111111]">
+                      {item.value}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
           <div className="grid gap-4 sm:grid-cols-2">
-            {profileCards.map((card) => {
+            {profileDetails.map((card) => {
               const Icon = card.icon;
 
               return (
                 <div
-                  key={card.title}
+                  key={card.label}
                   className="rounded-[1.75rem] border border-[#ece4d8] bg-white p-5 shadow-[0_14px_34px_rgba(17,17,17,0.05)]"
                 >
                   <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#111111] text-white shadow-[0_10px_24px_rgba(17,17,17,0.14)]">
@@ -149,7 +237,7 @@ export default function ProfilePage() {
                   </div>
 
                   <p className="mt-4 text-xs uppercase tracking-[0.16em] text-[#8e877c]">
-                    {card.title}
+                    {card.label}
                   </p>
                   <p className="mt-2 break-words text-base font-semibold capitalize tracking-[-0.02em] text-[#111111]">
                     {card.value}
@@ -159,117 +247,78 @@ export default function ProfilePage() {
             })}
           </div>
 
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="rounded-[1.6rem] border border-[#ece4d8] bg-white p-5 shadow-[0_14px_34px_rgba(17,17,17,0.05)]">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#f4ede2] text-[#111111]">
-                <Wallet size={18} />
-              </div>
-              <p className="mt-4 text-xs uppercase tracking-[0.16em] text-[#8e877c]">
-                Balance
-              </p>
-              <p className="mt-2 text-lg font-semibold text-[#111111]">
-                {formatMoney(balance)}
-              </p>
-            </div>
-
-            <div className="rounded-[1.6rem] border border-[#ece4d8] bg-white p-5 shadow-[0_14px_34px_rgba(17,17,17,0.05)]">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#f4ede2] text-[#111111]">
-                <ReceiptText size={18} />
-              </div>
-              <p className="mt-4 text-xs uppercase tracking-[0.16em] text-[#8e877c]">
-                Transactions
-              </p>
-              <p className="mt-2 text-lg font-semibold text-[#111111]">
-                {transactionCount}
-              </p>
-            </div>
-
-            <div className="rounded-[1.6rem] border border-[#ece4d8] bg-white p-5 shadow-[0_14px_34px_rgba(17,17,17,0.05)]">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#f4ede2] text-[#111111]">
-                <Bell size={18} />
-              </div>
-              <p className="mt-4 text-xs uppercase tracking-[0.16em] text-[#8e877c]">
-                Notifications
-              </p>
-              <p className="mt-2 text-lg font-semibold text-[#111111]">
-                {notificationCount}
-              </p>
-            </div>
-          </div>
-
-          <div className="rounded-[2rem] border border-[#ece4d8] bg-white p-6 shadow-[0_18px_40px_rgba(17,17,17,0.05)]">
-            <p className="text-[11px] uppercase tracking-[0.18em] text-[#948d83]">
-              Latest Account Activity
-            </p>
-            <h2 className="mt-2 text-xl font-semibold tracking-[-0.03em] text-[#111111]">
-              Recent profile-linked activity
-            </h2>
-
-            <div className="mt-5 grid gap-4 md:grid-cols-2">
-              <div className="rounded-[1.4rem] bg-[#faf7f1] p-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#111111] text-white">
-                    <ReceiptText size={17} />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-[#111111]">
-                      Latest Transaction
-                    </p>
-                    {!latestTransaction ? (
-                      <p className="mt-1 text-sm text-[#666666]">
-                        No transaction recorded yet.
-                      </p>
-                    ) : (
-                      <>
-                        <p className="mt-1 text-sm text-[#666666]">
-                          {latestTransaction.type === "credit"
-                            ? latestTransaction.title || "Account Credit"
-                            : latestTransaction.type === "transfer"
-                            ? `Transfer to ${latestTransaction.recipientName || "Recipient"}`
-                            : latestTransaction.title || "Transaction"}
-                        </p>
-                        <p
-                          className={`mt-2 text-sm font-semibold ${
-                            latestTransaction.type === "credit"
-                              ? "text-green-600"
-                              : "text-red-600"
-                          }`}
-                        >
-                          {latestTransaction.type === "credit" ? "+" : "-"}
-                          {formatMoney(latestTransaction.amount)}
-                        </p>
-                      </>
-                    )}
-                  </div>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div className="rounded-[2rem] border border-[#ece4d8] bg-white p-6 shadow-[0_18px_40px_rgba(17,17,17,0.05)]">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#111111] text-white">
+                  <ReceiptText size={17} />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-[#111111]">
+                    Latest Transaction
+                  </p>
                 </div>
               </div>
 
-              <div className="rounded-[1.4rem] bg-[#faf7f1] p-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#111111] text-white">
-                    <Landmark size={17} />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-[#111111]">
-                      Latest Notification
-                    </p>
-                    {!latestNotification ? (
-                      <p className="mt-1 text-sm text-[#666666]">
-                        No notification available yet.
-                      </p>
-                    ) : (
-                      <>
-                        <p className="mt-1 text-sm text-[#666666]">
-                          {latestNotification.title}
-                        </p>
-                        <p className="mt-2 text-xs text-[#8a847a]">
-                          {latestNotification.createdAtLabel || "Recently added"}
-                        </p>
-                      </>
-                    )}
-                  </div>
+              {!latestTransaction ? (
+                <p className="mt-4 text-sm text-[#666666]">
+                  No transaction recorded yet.
+                </p>
+              ) : (
+                <div className="mt-4 rounded-[1.35rem] bg-[#faf7f1] p-4">
+                  <p className="text-sm font-semibold text-[#111111]">
+                    {latestTransaction.type === "credit"
+                      ? latestTransaction.title || "Account Credit"
+                      : latestTransaction.type === "transfer"
+                      ? `Transfer to ${latestTransaction.recipientName || "Recipient"}`
+                      : latestTransaction.title || "Transaction"}
+                  </p>
+                  <p className="mt-2 text-sm text-[#666666]">
+                    {latestTransaction.description || "Recorded account activity"}
+                  </p>
+                  <p
+                    className={`mt-3 text-sm font-semibold ${
+                      latestTransaction.type === "credit"
+                        ? "text-green-600"
+                        : "text-red-600"
+                    }`}
+                  >
+                    {latestTransaction.type === "credit" ? "+" : "-"}
+                    {formatMoney(latestTransaction.amount)}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-[2rem] border border-[#ece4d8] bg-white p-6 shadow-[0_18px_40px_rgba(17,17,17,0.05)]">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#111111] text-white">
+                  <Landmark size={17} />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-[#111111]">
+                    Latest Notification
+                  </p>
                 </div>
               </div>
+
+              {!latestNotification ? (
+                <p className="mt-4 text-sm text-[#666666]">
+                  No notification available yet.
+                </p>
+              ) : (
+                <div className="mt-4 rounded-[1.35rem] bg-[#faf7f1] p-4">
+                  <p className="text-sm font-semibold text-[#111111]">
+                    {latestNotification.title}
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-[#666666]">
+                    {latestNotification.message}
+                  </p>
+                  <p className="mt-3 text-xs text-[#8a847a]">
+                    {latestNotification.createdAtLabel || "Recently added"}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>

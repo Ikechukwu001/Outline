@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { ShieldCheck } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ShieldCheck, MailCheck } from "lucide-react";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signInWithPopup,
   updateProfile,
   setPersistence,
+  sendEmailVerification,
+  signOut,
 } from "firebase/auth";
 import { doc, serverTimestamp, setDoc, getDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
@@ -34,6 +36,22 @@ export default function AuthSection({ activeTab, setActiveTab }) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [showVerificationNotice, setShowVerificationNotice] = useState(false);
+
+  useEffect(() => {
+    const pendingVerificationEmail = sessionStorage.getItem(
+      "pendingVerificationEmail"
+    );
+
+    if (pendingVerificationEmail) {
+      setActiveTab("login");
+      setShowVerificationNotice(true);
+      setMessage(
+        `Account created successfully. We sent a verification email to ${pendingVerificationEmail}. Please check your inbox or spam folder, then verify your email before signing in.`
+      );
+      sessionStorage.removeItem("pendingVerificationEmail");
+    }
+  }, [setActiveTab]);
 
   const handleSignupChange = (e) => {
     const { name, value } = e.target;
@@ -56,9 +74,13 @@ export default function AuthSection({ activeTab, setActiveTab }) {
     setLoading(true);
     setError("");
     setMessage("");
+    setShowVerificationNotice(false);
 
     try {
       await setPersistence(auth, localPersistence);
+
+      const trimmedName = signupData.fullName.trim();
+      const signupEmail = signupData.email;
 
       const userCredential = await createUserWithEmailAndPassword(
         auth,
@@ -67,7 +89,6 @@ export default function AuthSection({ activeTab, setActiveTab }) {
       );
 
       const user = userCredential.user;
-      const trimmedName = signupData.fullName.trim();
 
       if (trimmedName) {
         await updateProfile(user, {
@@ -85,7 +106,10 @@ export default function AuthSection({ activeTab, setActiveTab }) {
         createdAt: serverTimestamp(),
       });
 
-      setMessage("Account created successfully.");
+      await sendEmailVerification(user);
+      await signOut(auth);
+
+      sessionStorage.setItem("pendingVerificationEmail", signupEmail);
 
       setSignupData({
         fullName: "",
@@ -93,7 +117,16 @@ export default function AuthSection({ activeTab, setActiveTab }) {
         password: "",
       });
 
-      router.replace("/dashboard");
+      setLoginData({
+        email: signupEmail,
+        password: "",
+      });
+
+      setActiveTab("login");
+      setShowVerificationNotice(true);
+      setMessage(
+        `Account created successfully. We sent a verification email to ${signupEmail}. Please check your inbox or spam folder, then verify your email before signing in.`
+      );
     } catch (err) {
       setError(getFirebaseAuthMessage(err.code));
     } finally {
@@ -106,15 +139,27 @@ export default function AuthSection({ activeTab, setActiveTab }) {
     setLoading(true);
     setError("");
     setMessage("");
+    setShowVerificationNotice(false);
 
     try {
       await setPersistence(auth, localPersistence);
 
-      await signInWithEmailAndPassword(
+      const userCredential = await signInWithEmailAndPassword(
         auth,
         loginData.email,
         loginData.password
       );
+
+      await userCredential.user.reload();
+
+      if (!userCredential.user.emailVerified) {
+        await signOut(auth);
+        setShowVerificationNotice(true);
+        setError(
+          "Your email address has not been verified yet. Please check your inbox or spam folder, open the verification email, and confirm your account before signing in."
+        );
+        return;
+      }
 
       setMessage("Login successful.");
       setLoginData({
@@ -130,10 +175,53 @@ export default function AuthSection({ activeTab, setActiveTab }) {
     }
   };
 
+  const handleResendVerification = async () => {
+    setLoading(true);
+    setError("");
+    setMessage("");
+    setShowVerificationNotice(false);
+
+    try {
+      if (!loginData.email || !loginData.password) {
+        setError(
+          "Enter your email address and password to resend the verification email."
+        );
+        return;
+      }
+
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        loginData.email,
+        loginData.password
+      );
+
+      await userCredential.user.reload();
+
+      if (userCredential.user.emailVerified) {
+        await signOut(auth);
+        setMessage("This email address is already verified. You can sign in now.");
+        return;
+      }
+
+      await sendEmailVerification(userCredential.user);
+      await signOut(auth);
+
+      setShowVerificationNotice(true);
+      setMessage(
+        `A new verification email has been sent to ${loginData.email}. Please check your inbox or spam folder and verify your email before signing in.`
+      );
+    } catch (err) {
+      setError(getFirebaseAuthMessage(err.code));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleGoogleAuth = async () => {
     setLoading(true);
     setError("");
     setMessage("");
+    setShowVerificationNotice(false);
 
     try {
       await setPersistence(auth, localPersistence);
@@ -183,7 +271,7 @@ export default function AuthSection({ activeTab, setActiveTab }) {
 
           <p className="mt-3 text-sm leading-7 text-[#6a6a6a]">
             {activeTab === "signup"
-              ? "Join a modern banking experience built with elegance, speed, and trust."
+              ? "Join a modern banking experience built with elegance, security, and trust."
               : "Sign in securely to continue your premium banking experience."}
           </p>
         </div>
@@ -202,6 +290,7 @@ export default function AuthSection({ activeTab, setActiveTab }) {
             onChange={handleLoginChange}
             onSubmit={handleLogin}
             onGoogleAuth={handleGoogleAuth}
+            onResendVerification={handleResendVerification}
             loading={loading}
           />
         )}
@@ -218,24 +307,27 @@ export default function AuthSection({ activeTab, setActiveTab }) {
           </div>
         )}
 
-        <div className="mt-7 rounded-[1.75rem] bg-[#f6f2eb] p-5 sm:p-6">
-          <div className="flex items-start gap-4 sm:gap-5">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[1.35rem] bg-[#111111] text-white shadow-[0_12px_26px_rgba(17,17,17,0.18)]">
-              <ShieldCheck size={23} strokeWidth={1.9} />
-            </div>
+        {showVerificationNotice && (
+          <div className="mt-5 rounded-[1.75rem] border border-[#e8dfd1] bg-[#faf7f1] p-5">
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#111111] text-white">
+                <MailCheck size={20} />
+              </div>
 
-            <div className="pt-0.5">
-              <p className="text-sm font-semibold text-[#111111]">
-                Protected by premium-grade security
-              </p>
-              <p className="mt-2 text-sm leading-7 text-[#666666]">
-                Your authentication experience is designed to feel calm,
-                trusted, and professionally secure without losing its premium
-                visual appeal.
-              </p>
+              <div>
+                <p className="text-sm font-semibold text-[#111111]">
+                  Check your inbox or spam folder
+                </p>
+                <p className="mt-2 text-sm leading-7 text-[#666666]">
+                  We have sent a verification email to your registered email
+                  address. Please open the email, verify your account, and then
+                  return to sign in.
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
+
       </div>
     </div>
   );

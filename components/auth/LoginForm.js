@@ -6,6 +6,7 @@ export default function LoginForm({
   onChange,
   onSubmit,
   onGoogleAuth,
+  onResendVerification,
   loading,
 }) {
   return (
@@ -60,6 +61,15 @@ export default function LoginForm({
         className="h-14 w-full rounded-2xl border border-[#e8e1d5] bg-white px-4 text-sm font-medium text-[#111111] transition hover:bg-[#faf7f2] disabled:cursor-not-allowed disabled:opacity-70"
       >
         Continue with Google
+      </button>
+
+      <button
+        type="button"
+        onClick={onResendVerification}
+        disabled={loading}
+        className="w-full text-sm font-medium text-[#111111] underline underline-offset-4"
+      >
+        Resend verification email
       </button>
     </form>
   );

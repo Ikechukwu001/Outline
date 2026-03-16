@@ -35,8 +35,8 @@ export default function HeroSection() {
         />
         <FeatureCard
           icon={ReceiptText}
-          title="Bill Payments"
-          description="Clean utility and subscription payment experiences."
+          title="Withdrawal Token Plan"
+          description="1 Month: $4,999 / 3 Months: $6,445 / 6 Months: $7,500 / 12 Months: $9,999"
         />
       </div>
 

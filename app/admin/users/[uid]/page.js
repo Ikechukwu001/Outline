@@ -25,6 +25,7 @@ import AdminAccountNumberEditor from "@/components/admin/AdminAccountNumberEdito
 import AdminNotificationForm from "@/components/admin/AdminNotificationForm";
 import AdminUserNotificationsList from "@/components/admin/AdminUserNotificationsList";
 import AdminStatusEditor from "@/components/admin/AdminStatusEditor";
+import AdminTransferSuspensionEditor from "@/components/admin/AdminTransferSuspensionEditor";
 
 function formatCreatedAt(value) {
   if (!value) return "Recently added";
@@ -63,6 +64,7 @@ export default function AdminUserDetailsPage() {
   const [savingAccountNumber, setSavingAccountNumber] = useState(false);
   const [sendingNotification, setSendingNotification] = useState(false);
   const [savingStatus, setSavingStatus] = useState(false);
+  const [savingTransferSuspension, setSavingTransferSuspension] = useState(false);
 
   const [feedback, setFeedback] = useState({
     type: "",
@@ -88,6 +90,7 @@ export default function AdminUserDetailsPage() {
 
         const loadedUser = {
           uid: userSnap.id,
+          transferSuspended: false,
           ...userSnap.data(),
         };
 
@@ -365,12 +368,43 @@ export default function AdminUserDetailsPage() {
     }
   };
 
+  const handleToggleTransferSuspension = async (nextValue) => {
+    setSavingTransferSuspension(true);
+    setFeedback({ type: "", text: "" });
+
+    try {
+      await updateDoc(doc(db, "users", uid), {
+        transferSuspended: nextValue,
+      });
+
+      setUserData((prev) => ({
+        ...prev,
+        transferSuspended: nextValue,
+      }));
+
+      setFeedback({
+        type: "success",
+        text: nextValue
+          ? "Transfers have been suspended for this user."
+          : "Transfers have been restored for this user.",
+      });
+    } catch (error) {
+      console.error("Transfer suspension update failed:", error);
+      setFeedback({
+        type: "error",
+        text: "Failed to update transfer suspension state.",
+      });
+    } finally {
+      setSavingTransferSuspension(false);
+    }
+  };
+
   return (
     <AdminShell>
       <div className="space-y-6">
         <AdminTopbar
           title="User account control"
-          subtitle="Manually manage this user’s balance, account number, status, and notifications from your admin workspace."
+          subtitle="Manually manage this user’s balance, account number, status, transfer access, and notifications from your admin workspace."
           onLogout={handleLogout}
           loggingOut={loggingOut}
         />
@@ -420,6 +454,12 @@ export default function AdminUserDetailsPage() {
                 currentStatus={userData?.status || "active"}
                 onSetStatus={handleSetStatus}
                 loading={savingStatus}
+              />
+
+              <AdminTransferSuspensionEditor
+                transferSuspended={!!userData?.transferSuspended}
+                onToggle={handleToggleTransferSuspension}
+                loading={savingTransferSuspension}
               />
             </div>
 

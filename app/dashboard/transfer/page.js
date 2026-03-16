@@ -8,7 +8,6 @@ import {
   BadgeCheck,
   Wallet,
   FileText,
-  Lock,
 } from "lucide-react";
 import {
   addDoc,
@@ -60,9 +59,9 @@ export default function TransferPage() {
   const [receiptOpen, setReceiptOpen] = useState(false);
   const [receiptData, setReceiptData] = useState(null);
 
-  const { userName, userRecord, loadingData } = useDashboardData();
+  const [suspensionModalOpen, setSuspensionModalOpen] = useState(false);
 
-  const isDeactivated = userRecord?.status === "deactivated";
+  const { userName, userRecord, loadingData } = useDashboardData();
 
   const matchedRecipient = useMemo(() => {
     const normalizedBank = normalizeText(bankName);
@@ -117,21 +116,11 @@ export default function TransferPage() {
         return;
       }
 
-      if (isDeactivated) {
-        setFeedback({
-          type: "error",
-          text: "Your card/account is currently deactivated. Transfers are unavailable at this time.",
-        });
-        return;
-      }
-
       const trimmedBankName = bankName.trim();
       const trimmedAccountNumber = accountNumber.trim();
       const trimmedRecipientName = recipientName.trim();
       const trimmedDescription = description.trim();
       const numericAmount = Number(amount);
-      const reference = generateReference();
-      const transactionDate = new Date().toLocaleString();
 
       if (!trimmedBankName) {
         setFeedback({
@@ -164,6 +153,14 @@ export default function TransferPage() {
         });
         return;
       }
+
+      if (userRecord?.transferSuspended) {
+        setSuspensionModalOpen(true);
+        return;
+      }
+
+      const reference = generateReference();
+      const transactionDate = new Date().toLocaleString();
 
       const userRef = doc(db, "users", currentUser.uid);
 
@@ -262,6 +259,32 @@ export default function TransferPage() {
         onClose={() => setReceiptOpen(false)}
       />
 
+      {suspensionModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 px-4 py-6 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-[2rem] border border-[#e7ddd0] bg-[#fffdfa] p-6 shadow-[0_30px_80px_rgba(17,17,17,0.20)]">
+            <div className="flex h-14 w-14 items-center justify-center rounded-[1.35rem] bg-red-50 text-red-600">
+              <BadgeCheck size={22} />
+            </div>
+
+            <h2 className="mt-5 text-2xl font-semibold tracking-[-0.03em] text-[#111111]">
+              Transfer Suspended
+            </h2>
+            <p className="mt-3 text-sm leading-7 text-[#666666]">
+              Transfers are currently suspended on this account. Contact customer
+              care for support and further assistance.
+            </p>
+
+            <button
+              type="button"
+              onClick={() => setSuspensionModalOpen(false)}
+              className="mt-6 inline-flex h-12 w-full items-center justify-center rounded-2xl bg-[#111111] px-5 text-sm font-medium text-white shadow-[0_14px_30px_rgba(17,17,17,0.16)] transition hover:opacity-95"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="space-y-6">
         <section className="relative overflow-hidden rounded-[2rem] border border-[#e9dfd1] bg-white/92 p-6 shadow-[0_24px_60px_rgba(17,17,17,0.05)] sm:p-7">
           <div className="absolute right-[-30px] top-[-20px] h-32 w-32 rounded-full bg-[#eadfc8]/55 blur-3xl" />
@@ -288,13 +311,6 @@ export default function TransferPage() {
           </div>
         </section>
 
-        {isDeactivated && (
-          <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            Your card/account is currently deactivated. Transfers are disabled
-            until the account is reactivated. Please contact support for assistance.
-          </div>
-        )}
-
         {feedback.text && (
           <div
             className={`rounded-2xl px-4 py-3 text-sm ${
@@ -303,7 +319,7 @@ export default function TransferPage() {
                 : "border border-green-200 bg-green-50 text-green-700"
             }`}
           >
-            {feedback.text}
+            {error || feedback.text}
           </div>
         )}
 
@@ -334,8 +350,7 @@ export default function TransferPage() {
                     value={bankName}
                     onChange={(e) => setBankName(e.target.value)}
                     placeholder="Enter recipient bank name"
-                    disabled={isDeactivated}
-                    className="h-14 w-full rounded-2xl border border-[#e8e1d5] bg-[#fcfbf8] px-4 text-sm text-[#111111] outline-none transition placeholder:text-[#aaa294] focus:border-[#111111] focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                    className="h-14 w-full rounded-2xl border border-[#e8e1d5] bg-[#fcfbf8] px-4 text-sm text-[#111111] outline-none transition placeholder:text-[#aaa294] focus:border-[#111111] focus:bg-white"
                   />
                 </div>
 
@@ -348,8 +363,7 @@ export default function TransferPage() {
                     value={accountNumber}
                     onChange={(e) => handleAccountNumberChange(e.target.value)}
                     placeholder="Enter 10-digit account number"
-                    disabled={isDeactivated}
-                    className="h-14 w-full rounded-2xl border border-[#e8e1d5] bg-[#fcfbf8] px-4 text-sm tracking-[0.12em] text-[#111111] outline-none transition placeholder:tracking-normal placeholder:text-[#aaa294] focus:border-[#111111] focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                    className="h-14 w-full rounded-2xl border border-[#e8e1d5] bg-[#fcfbf8] px-4 text-sm tracking-[0.12em] text-[#111111] outline-none transition placeholder:tracking-normal placeholder:text-[#aaa294] focus:border-[#111111] focus:bg-white"
                   />
                 </div>
 
@@ -362,12 +376,13 @@ export default function TransferPage() {
                     value={recipientName}
                     onChange={(e) => handleRecipientNameChange(e.target.value)}
                     placeholder="Enter recipient full name"
-                    disabled={isDeactivated || !!matchedRecipient}
+                    disabled={!!matchedRecipient}
                     className="h-14 w-full rounded-2xl border border-[#e8e1d5] bg-[#fcfbf8] px-4 text-sm text-[#111111] outline-none transition placeholder:text-[#aaa294] focus:border-[#111111] focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
                   />
                   {matchedRecipient && (
                     <p className="mt-2 text-xs text-[#6a6a6a]">
-                      Transfer details match a known recipient. 
+                      Account name was matched automatically from saved bank
+                      details.
                     </p>
                   )}
                 </div>
@@ -383,8 +398,7 @@ export default function TransferPage() {
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                     placeholder="0.00"
-                    disabled={isDeactivated}
-                    className="h-16 w-full rounded-2xl border border-[#e8e1d5] bg-[#fcfbf8] px-4 text-lg font-semibold tracking-[-0.02em] text-[#111111] outline-none transition placeholder:text-[#aaa294] focus:border-[#111111] focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                    className="h-16 w-full rounded-2xl border border-[#e8e1d5] bg-[#fcfbf8] px-4 text-lg font-semibold tracking-[-0.02em] text-[#111111] outline-none transition placeholder:text-[#aaa294] focus:border-[#111111] focus:bg-white"
                   />
                 </div>
 
@@ -397,23 +411,18 @@ export default function TransferPage() {
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Add a payment note"
-                    disabled={isDeactivated}
-                    className="h-16 w-full rounded-2xl border border-[#e8e1d5] bg-[#fcfbf8] px-4 text-sm text-[#111111] outline-none transition placeholder:text-[#aaa294] focus:border-[#111111] focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                    className="h-16 w-full rounded-2xl border border-[#e8e1d5] bg-[#fcfbf8] px-4 text-sm text-[#111111] outline-none transition placeholder:text-[#aaa294] focus:border-[#111111] focus:bg-white"
                   />
                 </div>
 
                 <div className="md:col-span-2 pt-1">
                   <button
                     type="submit"
-                    disabled={submitting || isDeactivated}
+                    disabled={submitting}
                     className="inline-flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-[#111111] px-4 text-sm font-medium text-white shadow-[0_14px_30px_rgba(17,17,17,0.18)] transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    {isDeactivated ? <Lock size={18} /> : <SendHorizonal size={18} />}
-                    {isDeactivated
-                      ? "Transfers Disabled"
-                      : submitting
-                      ? "Processing transfer..."
-                      : "Transfer Funds"}
+                    <SendHorizonal size={18} />
+                    {submitting ? "Processing transfer..." : "Transfer Funds"}
                   </button>
                 </div>
               </form>

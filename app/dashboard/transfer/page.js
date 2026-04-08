@@ -319,7 +319,7 @@ export default function TransferPage() {
                 : "border border-green-200 bg-green-50 text-green-700"
             }`}
           >
-            {error || feedback.text}
+            {feedback.text}
           </div>
         )}
 

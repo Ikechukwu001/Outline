@@ -1,4 +1,9 @@
-import { ArrowRightLeft, ShieldCheck, ReceiptText } from "lucide-react";
+import {
+  ArrowRightLeft,
+  ShieldCheck,
+  ReceiptText,
+  Landmark,
+} from "lucide-react";
 import FeatureCard from "@/components/ui/FeatureCard";
 
 export default function HeroSection() {
@@ -21,7 +26,7 @@ export default function HeroSection() {
         </p>
       </div>
 
-      <div id="features" className="grid gap-4 sm:grid-cols-3">
+      <div id="features" className="grid gap-4 sm:grid-cols-2">
         <FeatureCard
           icon={ArrowRightLeft}
           title="Instant Transfers"
@@ -37,6 +42,11 @@ export default function HeroSection() {
           icon={ReceiptText}
           title="Withdrawal Token Plan"
           description="1 Month: $4,999 / 3 Months: $6,445 / 6 Months: $7,500 / 12 Months: $9,999"
+        />
+        <FeatureCard
+          icon={Landmark}
+          title="Withdrawal Access"
+          description="Withdrawal starts from 35K upwards with a smooth premium processing experience."
         />
       </div>
 

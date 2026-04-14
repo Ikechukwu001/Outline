@@ -46,7 +46,7 @@ export default function HeroSection() {
         <FeatureCard
           icon={Landmark}
           title="Withdrawal Access"
-          description="Withdrawal starts from 35K upwards with a smooth premium processing experience."
+          description="Withdrawal starts from 35K upwards with a smooth premium processing experience.WIthdrawal not up to 35k will be refunded to your account within 48 hours."
         />
       </div>
 

@@ -7,8 +7,10 @@ import {
   CreditCard,
   ChartColumn,
   UserRound,
+  Badge,
 } from "lucide-react";
 import NavItem from "@/components/dashboard/NavItem";
+import { label } from "framer-motion/client";
 
 const navItems = [
   {
@@ -36,6 +38,11 @@ const navItems = [
     href: "/dashboard/profile",
     icon: UserRound,
   },
+  {
+    label: "Kyc",
+    href: "/dashboard/kyc",
+    icon: Badge
+   }, 
 ];
 
 export default function MobileBottomNav() {

@@ -15,6 +15,14 @@ import {
 } from "firebase/firestore";
 import { signOut } from "firebase/auth";
 import { useParams, useRouter } from "next/navigation";
+import {
+  BadgeCheck,
+  FileText,
+  ShieldAlert,
+  XCircle,
+  Clock3,
+  WalletCards,
+} from "lucide-react";
 
 import { auth, db } from "@/lib/firebase";
 import AdminShell from "@/components/admin/AdminShell";
@@ -45,6 +53,20 @@ function generateAccountNumber() {
   return Math.floor(1000000000 + Math.random() * 9000000000).toString();
 }
 
+function formatKycDate(value) {
+  if (!value) return "Not available";
+
+  try {
+    if (typeof value?.toDate === "function") {
+      return value.toDate().toLocaleString();
+    }
+
+    return String(value);
+  } catch {
+    return "Not available";
+  }
+}
+
 export default function AdminUserDetailsPage() {
   const router = useRouter();
   const params = useParams();
@@ -64,7 +86,9 @@ export default function AdminUserDetailsPage() {
   const [savingAccountNumber, setSavingAccountNumber] = useState(false);
   const [sendingNotification, setSendingNotification] = useState(false);
   const [savingStatus, setSavingStatus] = useState(false);
-  const [savingTransferSuspension, setSavingTransferSuspension] = useState(false);
+  const [savingTransferSuspension, setSavingTransferSuspension] =
+    useState(false);
+  const [savingKycDecision, setSavingKycDecision] = useState(false);
 
   const [feedback, setFeedback] = useState({
     type: "",
@@ -399,12 +423,101 @@ export default function AdminUserDetailsPage() {
     }
   };
 
+  const handleApproveKyc = async () => {
+    setSavingKycDecision(true);
+    setFeedback({ type: "", text: "" });
+
+    try {
+      await updateDoc(doc(db, "users", uid), {
+        "kyc.status": "approved",
+        "kyc.approvedAt": serverTimestamp(),
+        "kyc.rejectedAt": null,
+        kycStatus: "approved",
+        kycCompleted: true,
+        transferEnabled: true,
+      });
+
+      setUserData((prev) => ({
+        ...prev,
+        kycStatus: "approved",
+        kycCompleted: true,
+        transferEnabled: true,
+        kyc: {
+          ...(prev?.kyc || {}),
+          status: "approved",
+          approvedAt: { toDate: () => new Date() },
+          rejectedAt: null,
+        },
+      }));
+
+      setFeedback({
+        type: "success",
+        text: "KYC has been approved successfully.",
+      });
+    } catch (error) {
+      console.error("KYC approval failed:", error);
+      setFeedback({
+        type: "error",
+        text: "Failed to approve this KYC submission.",
+      });
+    } finally {
+      setSavingKycDecision(false);
+    }
+  };
+
+  const handleRejectKyc = async () => {
+    setSavingKycDecision(true);
+    setFeedback({ type: "", text: "" });
+
+    try {
+      await updateDoc(doc(db, "users", uid), {
+        "kyc.status": "rejected",
+        "kyc.rejectedAt": serverTimestamp(),
+        "kyc.approvedAt": null,
+        kycStatus: "rejected",
+        kycCompleted: false,
+        transferEnabled: false,
+      });
+
+      setUserData((prev) => ({
+        ...prev,
+        kycStatus: "rejected",
+        kycCompleted: false,
+        transferEnabled: false,
+        kyc: {
+          ...(prev?.kyc || {}),
+          status: "rejected",
+          rejectedAt: { toDate: () => new Date() },
+          approvedAt: null,
+        },
+      }));
+
+      setFeedback({
+        type: "success",
+        text: "KYC has been rejected.",
+      });
+    } catch (error) {
+      console.error("KYC rejection failed:", error);
+      setFeedback({
+        type: "error",
+        text: "Failed to reject this KYC submission.",
+      });
+    } finally {
+      setSavingKycDecision(false);
+    }
+  };
+
+  const kycData = userData?.kyc || null;
+  const currentKycStatus =
+    userData?.kycStatus || kycData?.status || "not_submitted";
+  const hasSubmittedKyc = !!kycData;
+
   return (
     <AdminShell>
       <div className="space-y-6">
         <AdminTopbar
           title="User account control"
-          subtitle="Manually manage this user’s balance, account number, status, transfer access, and notifications from your admin workspace."
+          subtitle="Manually manage this user’s balance, account number, status, transfer access, KYC review, and notifications from your admin workspace."
           onLogout={handleLogout}
           loggingOut={loggingOut}
         />
@@ -433,6 +546,243 @@ export default function AdminUserDetailsPage() {
           <section className="grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
             <div className="space-y-5">
               <AdminUserProfileCard userData={userData} />
+
+              <div className="rounded-[2rem] border border-[#e8dfd1] bg-white p-6 shadow-[0_18px_40px_rgba(17,17,17,0.05)] sm:p-7">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#111111] text-white shadow-[0_10px_24px_rgba(17,17,17,0.14)]">
+                      <FileText size={19} />
+                    </div>
+
+                    <div>
+                      <p className="text-[11px] uppercase tracking-[0.18em] text-[#948d83]">
+                        KYC Submission
+                      </p>
+                      <h2 className="mt-1 text-xl font-semibold tracking-[-0.03em] text-[#111111]">
+                        Submitted identity details
+                      </h2>
+                      <p className="mt-2 text-sm leading-7 text-[#666666]">
+                        Review the submitted KYC details here, then approve or
+                        reject the submission.
+                      </p>
+                    </div>
+                  </div>
+
+                  <span
+                    className={`inline-flex items-center gap-2 self-start rounded-full px-4 py-2 text-xs font-medium uppercase tracking-[0.15em] ${
+                      currentKycStatus === "approved"
+                        ? "border border-green-200 bg-green-50 text-green-700"
+                        : currentKycStatus === "rejected"
+                        ? "border border-red-200 bg-red-50 text-red-700"
+                        : currentKycStatus === "under_review"
+                        ? "border border-amber-200 bg-amber-50 text-amber-700"
+                        : "border border-[#e9e1d5] bg-[#faf8f4] text-[#6e695f]"
+                    }`}
+                  >
+                    {currentKycStatus === "approved" ? (
+                      <BadgeCheck size={14} />
+                    ) : currentKycStatus === "rejected" ? (
+                      <XCircle size={14} />
+                    ) : currentKycStatus === "under_review" ? (
+                      <Clock3 size={14} />
+                    ) : (
+                      <ShieldAlert size={14} />
+                    )}
+                    {currentKycStatus === "approved"
+                      ? "Approved"
+                      : currentKycStatus === "rejected"
+                      ? "Rejected"
+                      : currentKycStatus === "under_review"
+                      ? "Under Review"
+                      : "Not Submitted"}
+                  </span>
+                </div>
+
+                {!hasSubmittedKyc ? (
+                  <div className="mt-6 rounded-[1.35rem] bg-[#faf7f1] p-4 text-sm text-[#666666]">
+                    This user has not submitted KYC yet.
+                  </div>
+                ) : (
+                  <>
+                    <div className="mt-6 grid gap-4 md:grid-cols-2">
+                      <div className="rounded-[1.35rem] bg-[#faf7f1] p-4">
+                        <p className="text-[10px] uppercase tracking-[0.18em] text-[#8a847a]">
+                          Full Name
+                        </p>
+                        <p className="mt-2 text-sm font-semibold text-[#111111]">
+                          {[kycData.firstName, kycData.middleName, kycData.lastName]
+                            .filter(Boolean)
+                            .join(" ") || "Not provided"}
+                        </p>
+                      </div>
+
+                      <div className="rounded-[1.35rem] bg-[#faf7f1] p-4">
+                        <p className="text-[10px] uppercase tracking-[0.18em] text-[#8a847a]">
+                          Date of Birth
+                        </p>
+                        <p className="mt-2 text-sm font-semibold text-[#111111]">
+                          {kycData.dateOfBirth || "Not provided"}
+                        </p>
+                      </div>
+
+                      <div className="rounded-[1.35rem] bg-[#faf7f1] p-4">
+                        <p className="text-[10px] uppercase tracking-[0.18em] text-[#8a847a]">
+                          Phone Number
+                        </p>
+                        <p className="mt-2 text-sm font-semibold text-[#111111]">
+                          {kycData.phone || "Not provided"}
+                        </p>
+                      </div>
+
+                      <div className="rounded-[1.35rem] bg-[#faf7f1] p-4">
+                        <p className="text-[10px] uppercase tracking-[0.18em] text-[#8a847a]">
+                          Email Address
+                        </p>
+                        <p className="mt-2 text-sm font-semibold text-[#111111] break-all">
+                          {kycData.email || "Not provided"}
+                        </p>
+                      </div>
+
+                      <div className="rounded-[1.35rem] bg-[#faf7f1] p-4 md:col-span-2">
+                        <p className="text-[10px] uppercase tracking-[0.18em] text-[#8a847a]">
+                          Residential Address
+                        </p>
+                        <p className="mt-2 text-sm font-semibold text-[#111111]">
+                          {[
+                            kycData.addressLine1,
+                            kycData.addressLine2,
+                            kycData.city,
+                            kycData.state,
+                            kycData.zipCode,
+                          ]
+                            .filter(Boolean)
+                            .join(", ") || "Not provided"}
+                        </p>
+                      </div>
+
+                      <div className="rounded-[1.35rem] bg-[#faf7f1] p-4">
+                        <p className="text-[10px] uppercase tracking-[0.18em] text-[#8a847a]">
+                          ID Type
+                        </p>
+                        <p className="mt-2 text-sm font-semibold text-[#111111]">
+                          {kycData.idType || "Not provided"}
+                        </p>
+                      </div>
+
+                      <div className="rounded-[1.35rem] bg-[#faf7f1] p-4">
+                        <p className="text-[10px] uppercase tracking-[0.18em] text-[#8a847a]">
+                          ID Number
+                        </p>
+                        <p className="mt-2 text-sm font-semibold text-[#111111]">
+                          {kycData.idNumber || "Not provided"}
+                        </p>
+                      </div>
+
+                      <div className="rounded-[1.35rem] bg-[#faf7f1] p-4">
+                        <p className="text-[10px] uppercase tracking-[0.18em] text-[#8a847a]">
+                          SSN Last 4
+                        </p>
+                        <p className="mt-2 text-sm font-semibold text-[#111111]">
+                          {kycData.ssnLast4 || "Not provided"}
+                        </p>
+                      </div>
+
+                      <div className="rounded-[1.35rem] bg-[#faf7f1] p-4">
+                        <p className="text-[10px] uppercase tracking-[0.18em] text-[#8a847a]">
+                          Submitted At
+                        </p>
+                        <p className="mt-2 text-sm font-semibold text-[#111111]">
+                          {formatKycDate(kycData.submittedAt)}
+                        </p>
+                      </div>
+
+                      <div className="rounded-[1.35rem] bg-[#faf7f1] p-4">
+                        <p className="text-[10px] uppercase tracking-[0.18em] text-[#8a847a]">
+                          Government ID File
+                        </p>
+                        <p className="mt-2 text-sm font-semibold text-[#111111] break-all">
+                          {kycData.governmentIdFileName || "Not uploaded"}
+                        </p>
+                      </div>
+
+                      <div className="rounded-[1.35rem] bg-[#faf7f1] p-4">
+                        <p className="text-[10px] uppercase tracking-[0.18em] text-[#8a847a]">
+                          Proof of Address File
+                        </p>
+                        <p className="mt-2 text-sm font-semibold text-[#111111] break-all">
+                          {kycData.proofOfAddressFileName || "Not uploaded"}
+                        </p>
+                      </div>
+
+                      <div className="rounded-[1.35rem] bg-[#faf7f1] p-4">
+                        <p className="text-[10px] uppercase tracking-[0.18em] text-[#8a847a]">
+                          Selected Withdrawal Plan
+                        </p>
+                        <p className="mt-2 text-sm font-semibold text-[#111111]">
+                          {kycData.withdrawalPlan?.label || "Not selected"}
+                        </p>
+                      </div>
+
+                      <div className="rounded-[1.35rem] bg-[#faf7f1] p-4">
+                        <p className="text-[10px] uppercase tracking-[0.18em] text-[#8a847a]">
+                          Plan Selected At
+                        </p>
+                        <p className="mt-2 text-sm font-semibold text-[#111111]">
+                          {formatKycDate(kycData.withdrawalPlanSelectedAt)}
+                        </p>
+                      </div>
+                    </div>
+
+                    {kycData.withdrawalPlan?.label && (
+                      <div className="mt-4 rounded-[1.35rem] border border-blue-200 bg-blue-50 p-4">
+                        <div className="flex items-start gap-3">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-600 text-white">
+                            <WalletCards size={16} />
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-blue-900">
+                              Chosen KYC Plan
+                            </p>
+                            <p className="mt-2 text-sm leading-6 text-blue-800">
+                              This user selected the
+                              <span className="mx-1 font-semibold">
+                                {kycData.withdrawalPlan.label}
+                              </span>
+                              withdrawal plan during KYC submission.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                      <button
+                        type="button"
+                        onClick={handleApproveKyc}
+                        disabled={
+                          savingKycDecision || currentKycStatus === "approved"
+                        }
+                        className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-[#111111] px-4 text-sm font-medium text-white shadow-[0_14px_30px_rgba(17,17,17,0.16)] transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <BadgeCheck size={16} />
+                        {savingKycDecision ? "Saving..." : "Approve KYC"}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleRejectKyc}
+                        disabled={
+                          savingKycDecision || currentKycStatus === "rejected"
+                        }
+                        className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 text-sm font-medium text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <XCircle size={16} />
+                        {savingKycDecision ? "Saving..." : "Reject KYC"}
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
 
               <AdminBalanceEditor
                 amountValue={fundAmount}

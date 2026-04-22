@@ -7,6 +7,7 @@ import {
   CreditCard,
   ChartColumn,
   UserRound,
+  Badge
 } from "lucide-react";
 import NavItem from "@/components/dashboard/NavItem";
 
@@ -35,6 +36,11 @@ const navItems = [
     label: "Profile",
     href: "/dashboard/profile",
     icon: UserRound,
+  },
+    {
+    label: "Kyc",
+    href: "/dashboard/kyc",
+    icon: Badge,
   },
 ];
 

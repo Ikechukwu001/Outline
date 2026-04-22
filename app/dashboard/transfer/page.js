@@ -2,12 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
-  Landmark,
   ShieldCheck,
   SendHorizonal,
   BadgeCheck,
   Wallet,
-  FileText,
+  ShieldAlert,
+  WalletCards,
 } from "lucide-react";
 import {
   addDoc,
@@ -60,6 +60,7 @@ export default function TransferPage() {
   const [receiptData, setReceiptData] = useState(null);
 
   const [suspensionModalOpen, setSuspensionModalOpen] = useState(false);
+  const [kycRequiredModalOpen, setKycRequiredModalOpen] = useState(false);
 
   const { userName, userRecord, loadingData } = useDashboardData();
 
@@ -75,6 +76,9 @@ export default function TransferPage() {
       ) || null
     );
   }, [bankName, accountNumber]);
+
+  const isKycApproved = userRecord?.kycStatus === "approved";
+  const selectedWithdrawalPlan = userRecord?.kyc?.withdrawalPlan || null;
 
   useEffect(() => {
     if (matchedRecipient) {
@@ -154,6 +158,11 @@ export default function TransferPage() {
         return;
       }
 
+      if (!isKycApproved) {
+        setKycRequiredModalOpen(true);
+        return;
+      }
+
       if (userRecord?.transferSuspended) {
         setSuspensionModalOpen(true);
         return;
@@ -176,6 +185,14 @@ export default function TransferPage() {
 
         if (currentBalance < numericAmount) {
           throw new Error("INSUFFICIENT_BALANCE");
+        }
+
+        if (userData?.kycStatus !== "approved") {
+          throw new Error("KYC_NOT_APPROVED");
+        }
+
+        if (userData?.transferSuspended) {
+          throw new Error("TRANSFER_SUSPENDED");
         }
 
         const updatedBalance = currentBalance - numericAmount;
@@ -232,6 +249,18 @@ export default function TransferPage() {
           type: "error",
           text: "Your account record could not be found.",
         });
+      } else if (error.message === "KYC_NOT_APPROVED") {
+        setKycRequiredModalOpen(true);
+        setFeedback({
+          type: "error",
+          text: "Your KYC must be approved before you can transfer funds.",
+        });
+      } else if (error.message === "TRANSFER_SUSPENDED") {
+        setSuspensionModalOpen(true);
+        setFeedback({
+          type: "error",
+          text: "Transfers are currently suspended on this account.",
+        });
       } else {
         setFeedback({
           type: "error",
@@ -258,6 +287,33 @@ export default function TransferPage() {
         receiptData={receiptData}
         onClose={() => setReceiptOpen(false)}
       />
+
+      {kycRequiredModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 px-4 py-6 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-[2rem] border border-[#e7ddd0] bg-[#fffdfa] p-6 shadow-[0_30px_80px_rgba(17,17,17,0.20)]">
+            <div className="flex h-14 w-14 items-center justify-center rounded-[1.35rem] bg-amber-50 text-amber-600">
+              <ShieldAlert size={22} />
+            </div>
+
+            <h2 className="mt-5 text-2xl font-semibold tracking-[-0.03em] text-[#111111]">
+              KYC Approval Required
+            </h2>
+            <p className="mt-3 text-sm leading-7 text-[#666666]">
+              Your identity verification must be approved before transfers can
+              be enabled on this account. Please complete your KYC and wait for
+              admin approval.
+            </p>
+
+            <button
+              type="button"
+              onClick={() => setKycRequiredModalOpen(false)}
+              className="mt-6 inline-flex h-12 w-full items-center justify-center rounded-2xl bg-[#111111] px-5 text-sm font-medium text-white shadow-[0_14px_30px_rgba(17,17,17,0.16)] transition hover:opacity-95"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
 
       {suspensionModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 px-4 py-6 backdrop-blur-sm">
@@ -299,14 +355,39 @@ export default function TransferPage() {
                 Transfer funds securely
               </h1>
               <p className="mt-3 max-w-2xl text-sm leading-7 text-[#666666]">
-                Complete a direct bank transfer with a refined banking form built
-                to feel professional, trusted, and account-aware.
+                Complete a direct bank transfer to any recipient worldwide with our secure transfer service.
               </p>
             </div>
 
-            <div className="inline-flex items-center gap-2 self-start rounded-full border border-[#e9e1d5] bg-[#faf8f4] px-4 py-2.5 text-xs font-medium uppercase tracking-[0.18em] text-[#6e695f]">
-              <ShieldCheck size={15} />
-              Protected transfer validation
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[#e9e1d5] bg-[#faf8f4] px-4 py-2.5 text-xs font-medium uppercase tracking-[0.18em] text-[#6e695f]">
+                <ShieldCheck size={15} />
+                Protected transfer validation
+              </div>
+
+              <div
+                className={`inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-xs font-medium uppercase tracking-[0.18em] ${
+                  isKycApproved
+                    ? "border border-green-200 bg-green-50 text-green-700"
+                    : "border border-amber-200 bg-amber-50 text-amber-700"
+                }`}
+              >
+                {isKycApproved ? <BadgeCheck size={15} /> : <ShieldAlert size={15} />}
+                {isKycApproved ? "KYC Approved" : "KYC Required"}
+              </div>
+
+              <div
+                className={`inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-xs font-medium uppercase tracking-[0.18em] ${
+                  selectedWithdrawalPlan
+                    ? "border border-blue-200 bg-blue-50 text-blue-700"
+                    : "border border-[#e9e1d5] bg-[#faf8f4] text-[#6e695f]"
+                }`}
+              >
+                <WalletCards size={15} />
+                {selectedWithdrawalPlan
+                  ? `Plan ${selectedWithdrawalPlan.label}`
+                  : "No Plan Selected"}
+              </div>
             </div>
           </div>
         </section>
@@ -340,6 +421,18 @@ export default function TransferPage() {
                 </div>
               </div>
 
+              {!isKycApproved && (
+                <div className="mb-5 rounded-[1.35rem] border border-amber-200 bg-amber-50 p-4">
+                  <p className="text-sm font-semibold text-amber-800">
+                    Transfer locked until KYC approval
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-amber-700">
+                    Your account must complete and receive approval for KYC
+                    verification before transfers can be processed.
+                  </p>
+                </div>
+              )}
+
               <form onSubmit={handleTransfer} className="grid gap-5 md:grid-cols-2">
                 <div className="md:col-span-2">
                   <label className="mb-2.5 block text-sm font-medium text-[#232323]">
@@ -350,7 +443,8 @@ export default function TransferPage() {
                     value={bankName}
                     onChange={(e) => setBankName(e.target.value)}
                     placeholder="Enter recipient bank name"
-                    className="h-14 w-full rounded-2xl border border-[#e8e1d5] bg-[#fcfbf8] px-4 text-sm text-[#111111] outline-none transition placeholder:text-[#aaa294] focus:border-[#111111] focus:bg-white"
+                    disabled={!isKycApproved || submitting}
+                    className="h-14 w-full rounded-2xl border border-[#e8e1d5] bg-[#fcfbf8] px-4 text-sm text-[#111111] outline-none transition placeholder:text-[#aaa294] focus:border-[#111111] focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
                   />
                 </div>
 
@@ -363,7 +457,8 @@ export default function TransferPage() {
                     value={accountNumber}
                     onChange={(e) => handleAccountNumberChange(e.target.value)}
                     placeholder="Enter 10-digit account number"
-                    className="h-14 w-full rounded-2xl border border-[#e8e1d5] bg-[#fcfbf8] px-4 text-sm tracking-[0.12em] text-[#111111] outline-none transition placeholder:tracking-normal placeholder:text-[#aaa294] focus:border-[#111111] focus:bg-white"
+                    disabled={!isKycApproved || submitting}
+                    className="h-14 w-full rounded-2xl border border-[#e8e1d5] bg-[#fcfbf8] px-4 text-sm tracking-[0.12em] text-[#111111] outline-none transition placeholder:tracking-normal placeholder:text-[#aaa294] focus:border-[#111111] focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
                   />
                 </div>
 
@@ -376,7 +471,7 @@ export default function TransferPage() {
                     value={recipientName}
                     onChange={(e) => handleRecipientNameChange(e.target.value)}
                     placeholder="Enter recipient full name"
-                    disabled={!!matchedRecipient}
+                    disabled={!isKycApproved || !!matchedRecipient || submitting}
                     className="h-14 w-full rounded-2xl border border-[#e8e1d5] bg-[#fcfbf8] px-4 text-sm text-[#111111] outline-none transition placeholder:text-[#aaa294] focus:border-[#111111] focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
                   />
                   {matchedRecipient && (
@@ -398,7 +493,8 @@ export default function TransferPage() {
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                     placeholder="0.00"
-                    className="h-16 w-full rounded-2xl border border-[#e8e1d5] bg-[#fcfbf8] px-4 text-lg font-semibold tracking-[-0.02em] text-[#111111] outline-none transition placeholder:text-[#aaa294] focus:border-[#111111] focus:bg-white"
+                    disabled={!isKycApproved || submitting}
+                    className="h-16 w-full rounded-2xl border border-[#e8e1d5] bg-[#fcfbf8] px-4 text-lg font-semibold tracking-[-0.02em] text-[#111111] outline-none transition placeholder:text-[#aaa294] focus:border-[#111111] focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
                   />
                 </div>
 
@@ -411,18 +507,23 @@ export default function TransferPage() {
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Add a payment note"
-                    className="h-16 w-full rounded-2xl border border-[#e8e1d5] bg-[#fcfbf8] px-4 text-sm text-[#111111] outline-none transition placeholder:text-[#aaa294] focus:border-[#111111] focus:bg-white"
+                    disabled={!isKycApproved || submitting}
+                    className="h-16 w-full rounded-2xl border border-[#e8e1d5] bg-[#fcfbf8] px-4 text-sm text-[#111111] outline-none transition placeholder:text-[#aaa294] focus:border-[#111111] focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
                   />
                 </div>
 
                 <div className="md:col-span-2 pt-1">
                   <button
                     type="submit"
-                    disabled={submitting}
+                    disabled={!isKycApproved || submitting}
                     className="inline-flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-[#111111] px-4 text-sm font-medium text-white shadow-[0_14px_30px_rgba(17,17,17,0.18)] transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <SendHorizonal size={18} />
-                    {submitting ? "Processing transfer..." : "Transfer Funds"}
+                    {submitting
+                      ? "Processing transfer..."
+                      : !isKycApproved
+                      ? "KYC Approval Required"
+                      : "Transfer Funds"}
                   </button>
                 </div>
               </form>
@@ -470,6 +571,66 @@ export default function TransferPage() {
                   </p>
                   <p className="mt-2 text-sm font-semibold text-[#111111]">
                     {userRecord?.accountNumber || "Not assigned"}
+                  </p>
+                </div>
+
+                <div
+                  className={`rounded-[1.35rem] p-4 ${
+                    isKycApproved ? "bg-green-50" : "bg-amber-50"
+                  }`}
+                >
+                  <p
+                    className={`text-[10px] uppercase tracking-[0.18em] ${
+                      isKycApproved ? "text-green-700" : "text-amber-700"
+                    }`}
+                  >
+                    KYC Status
+                  </p>
+                  <p
+                    className={`mt-2 text-sm font-semibold ${
+                      isKycApproved ? "text-green-800" : "text-amber-800"
+                    }`}
+                  >
+                    {isKycApproved ? "Approved" : "Pending approval"}
+                  </p>
+                  <p
+                    className={`mt-2 text-sm leading-6 ${
+                      isKycApproved ? "text-green-700" : "text-amber-700"
+                    }`}
+                  >
+                    {isKycApproved
+                      ? "Your account is approved for transfer access."
+                      : "Transfers remain locked until your KYC has been approved by admin."}
+                  </p>
+                </div>
+
+                <div
+                  className={`rounded-[1.35rem] p-4 ${
+                    selectedWithdrawalPlan ? "bg-blue-50" : "bg-[#faf7f1]"
+                  }`}
+                >
+                  <p
+                    className={`text-[10px] uppercase tracking-[0.18em] ${
+                      selectedWithdrawalPlan ? "text-blue-700" : "text-[#8a847a]"
+                    }`}
+                  >
+                    Selected Withdrawal Plan
+                  </p>
+                  <p
+                    className={`mt-2 text-sm font-semibold ${
+                      selectedWithdrawalPlan ? "text-blue-900" : "text-[#111111]"
+                    }`}
+                  >
+                    {selectedWithdrawalPlan?.label || "No plan selected"}
+                  </p>
+                  <p
+                    className={`mt-2 text-sm leading-6 ${
+                      selectedWithdrawalPlan ? "text-blue-800" : "text-[#666666]"
+                    }`}
+                  >
+                    {selectedWithdrawalPlan
+                      ? "This is the withdrawal plan selected during your KYC submission."
+                      : "You have not selected a withdrawal plan in your KYC yet."}
                   </p>
                 </div>
               </div>

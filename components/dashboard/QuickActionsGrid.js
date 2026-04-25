@@ -1,3 +1,4 @@
+import Link from "next/link";
 import QuickActionCard from "@/components/dashboard/QuickActionCard";
 
 export default function QuickActionsGrid({ actions }) {
@@ -26,6 +27,7 @@ export default function QuickActionsGrid({ actions }) {
             description={action.description}
             type={action.type}
             href={action.href}
+            onClick={action.onClick}
           />
         ))}
       </div>
